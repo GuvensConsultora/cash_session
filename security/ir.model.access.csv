@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_cash_register_user,cash.register user,model_cash_register,group_cash_user,1,0,0,0
+access_cash_register_manager,cash.register manager,model_cash_register,group_cash_manager,1,1,1,1
+access_cash_session_user,cash.session user,model_cash_session,group_cash_user,1,1,1,0
+access_cash_session_manager,cash.session manager,model_cash_session,group_cash_manager,1,1,1,1
+access_cash_session_line_user,cash.session.line user,model_cash_session_line,group_cash_user,1,1,1,1
+access_cash_session_line_manager,cash.session.line manager,model_cash_session_line,group_cash_manager,1,1,1,1

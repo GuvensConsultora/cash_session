@@ -1,0 +1,154 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cash_session_list" model="ir.ui.view">
+        <field name="name">cash.session.list</field>
+        <field name="model">cash.session</field>
+        <field name="arch" type="xml">
+            <list decoration-info="state == 'draft'"
+                  decoration-warning="state == 'closing'"
+                  decoration-success="state == 'closed'"
+                  decoration-bf="state == 'open'">
+                <field name="name"/>
+                <field name="cash_register_id"/>
+                <field name="responsible_id"/>
+                <field name="date_open"/>
+                <field name="date_close"/>
+                <field name="difference_total" widget="monetary"
+                       decoration-danger="difference_total != 0"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'draft'"
+                       decoration-warning="state == 'closing'"
+                       decoration-success="state == 'closed'"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="currency_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cash_session_form" model="ir.ui.view">
+        <field name="name">cash.session.form</field>
+        <field name="model">cash.session</field>
+        <field name="arch" type="xml">
+            <form>
+                <header>
+                    <button name="action_open" string="Abrir caja" type="object"
+                            class="btn-primary" invisible="state != 'draft'"
+                            icon="fa-unlock"/>
+                    <button name="action_create_statements" string="Confirmar apertura"
+                            type="object" class="btn-primary"
+                            invisible="state != 'open' or statement_ids"
+                            icon="fa-check"/>
+                    <button name="action_start_closing" string="Iniciar cierre"
+                            type="object" class="btn-primary"
+                            invisible="state != 'open'" icon="fa-clock-o"/>
+                    <button name="action_validate_close" string="Validar cierre"
+                            type="object" class="btn-primary"
+                            invisible="state != 'closing'" icon="fa-check-circle"
+                            confirm="¿Confirmar el cierre? Se postearán los extractos y se generará el asiento de transferencia a caja central."/>
+                    <button name="action_view_transfer_move" string="Ver asiento transferencia"
+                            type="object" invisible="not transfer_move_id"
+                            icon="fa-external-link"/>
+                    <field name="state" widget="statusbar"
+                           statusbar_visible="draft,open,closing,closed"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="name" readonly="1"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="cash_register_id"
+                                   readonly="state != 'draft'"
+                                   options="{'no_create': True}"/>
+                            <field name="responsible_id"
+                                   readonly="state != 'draft'"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group>
+                            <field name="date_open" readonly="state != 'draft'"/>
+                            <field name="date_close" readonly="1"/>
+                            <field name="difference_total" widget="monetary"
+                                   invisible="state in ('draft','open')"/>
+                            <field name="currency_id" invisible="1"/>
+                        </group>
+                    </group>
+
+                    <notebook>
+                        <page string="Apertura" name="opening"
+                              invisible="state == 'draft'">
+                            <field name="opening_line_ids" readonly="state != 'open'">
+                                <list editable="bottom">
+                                    <field name="journal_id" readonly="1"/>
+                                    <field name="journal_kind" readonly="1"/>
+                                    <field name="physical_amount" widget="monetary" sum="Total"/>
+                                    <field name="note"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <p class="text-muted">
+                                Cargá el saldo físico inicial de cada journal (lo que
+                                había en caja al recibir el turno). Después tocá
+                                "Confirmar apertura" para crear los extractos.
+                            </p>
+                        </page>
+
+                        <page string="Extractos" name="statements"
+                              invisible="not statement_ids">
+                            <field name="statement_ids" readonly="1">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="journal_id"/>
+                                    <field name="balance_start" widget="monetary"/>
+                                    <field name="balance_end" widget="monetary"/>
+                                    <field name="balance_end_real" widget="monetary"/>
+                                    <field name="state" widget="badge"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                        </page>
+
+                        <page string="Cierre" name="closing"
+                              invisible="state not in ('closing','closed')">
+                            <field name="closing_line_ids"
+                                   readonly="state == 'closed'">
+                                <list editable="bottom">
+                                    <field name="journal_id" readonly="1"/>
+                                    <field name="journal_kind" readonly="1"/>
+                                    <field name="theoretical_amount" widget="monetary" readonly="1"/>
+                                    <field name="physical_amount" widget="monetary" sum="Físico"/>
+                                    <field name="difference" widget="monetary"
+                                           decoration-danger="difference != 0"
+                                           sum="Diferencia"/>
+                                    <field name="note"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <group>
+                                <field name="closing_observations"
+                                       placeholder="Si hay diferencia, justificá acá."
+                                       readonly="state == 'closed'"/>
+                            </group>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cash_session" model="ir.actions.act_window">
+        <field name="name">Sesiones de caja</field>
+        <field name="res_model">cash.session</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">
+                Crear una nueva sesión de caja
+            </p>
+            <p>
+                Cada sesión representa un turno: apertura con arqueo físico,
+                operación normal (cobranzas y pagos), cierre con recuento
+                y transferencia a caja central.
+            </p>
+        </field>
+    </record>
+</odoo>

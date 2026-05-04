@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Las secuencias por caja se crean dinámicamente en CashSession.create.
+         Acá dejamos solo una secuencia genérica de respaldo. -->
+    <record id="seq_cash_session_default" model="ir.sequence">
+        <field name="name">Sesión de caja (default)</field>
+        <field name="code">cash.session.default</field>
+        <field name="prefix">CAJA/%(year)s/</field>
+        <field name="padding">5</field>
+    </record>
+</odoo>

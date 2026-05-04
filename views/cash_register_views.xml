@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_cash_register_list" model="ir.ui.view">
+        <field name="name">cash.register.list</field>
+        <field name="model">cash.register</field>
+        <field name="arch" type="xml">
+            <list>
+                <field name="name"/>
+                <field name="code"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+                <field name="allow_payments_out" widget="boolean_toggle"/>
+                <field name="active" widget="boolean_toggle"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_cash_register_form" model="ir.ui.view">
+        <field name="name">cash.register.form</field>
+        <field name="model">cash.register</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <widget name="web_ribbon" title="Archivada" bg_color="bg-danger"
+                            invisible="active"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="Ej: Caja Mostrador Mendoza"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="code" placeholder="Ej: CMZA"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group>
+                            <field name="allow_payments_out"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Journals que opera" name="journals">
+                            <field name="journal_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="code"/>
+                                    <field name="type"/>
+                                    <field name="cash_session_kind"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Responsables autorizados" name="users">
+                            <field name="responsible_user_ids">
+                                <list>
+                                    <field name="name"/>
+                                    <field name="login"/>
+                                </list>
+                            </field>
+                            <p class="text-muted">
+                                Si la lista queda vacía, cualquier usuario con permisos
+                                "Cash Session — Usuario" puede operar esta caja.
+                            </p>
+                        </page>
+                    </notebook>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_cash_register" model="ir.actions.act_window">
+        <field name="name">Cajas</field>
+        <field name="res_model">cash.register</field>
+        <field name="view_mode">list,form</field>
+    </record>
+</odoo>
