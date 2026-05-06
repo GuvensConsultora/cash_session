@@ -101,7 +101,6 @@
                                     <field name="balance_start" widget="monetary"/>
                                     <field name="balance_end" widget="monetary"/>
                                     <field name="balance_end_real" widget="monetary"/>
-                                    <field name="state" widget="badge"/>
                                     <field name="currency_id" column_invisible="True"/>
                                 </list>
                             </field>
