@@ -73,9 +73,12 @@ class CashSessionLine(models.Model):
             if not session.date_open:
                 l.theoretical_amount = balance_start
                 continue
+            # En Odoo 19 el state de account.payment puede ser 'paid', 'in_process'
+            # o 'posted' según la versión. Usamos move_id.state == 'posted' como
+            # criterio estable: el pago efectivamente posteó su asiento contable.
             domain = [
                 ('journal_id', '=', l.journal_id.id),
-                ('state', '=', 'posted'),
+                ('move_id.state', '=', 'posted'),
                 ('date', '>=', fields.Date.to_date(session.date_open)),
             ]
             if session.date_close:
