@@ -25,9 +25,9 @@ class CashSession(models.Model):
         store=True, readonly=True,
     )
     date_open = fields.Datetime(
-        string='Apertura', default=fields.Datetime.now, tracking=True,
+        string='Fecha apertura', default=fields.Datetime.now, tracking=True,
     )
-    date_close = fields.Datetime(string='Cierre', readonly=True, tracking=True)
+    date_close = fields.Datetime(string='Fecha cierre', readonly=True, tracking=True)
 
     state = fields.Selection(
         [('draft', 'Borrador'),

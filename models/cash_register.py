@@ -43,11 +43,11 @@ class CashRegister(models.Model):
     )
     active = fields.Boolean(default=True)
 
-    _sql_constraints = [
-        ('name_company_unique',
-         'unique(name, company_id)',
-         'Ya existe una caja con ese nombre en la compañía.'),
-    ]
+    # Odoo 19: nueva sintaxis con models.Constraint en lugar de _sql_constraints
+    _name_company_unique = models.Constraint(
+        'unique(name, company_id)',
+        'Ya existe una caja con ese nombre en la compañía.',
+    )
 
     @api.constrains('journal_ids', 'company_id')
     def _check_journals_company(self):
