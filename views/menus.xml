@@ -6,6 +6,7 @@
     <!-- ============================================================ -->
     <menuitem id="menu_cash_session_root"
               name="Caja"
+              web_icon="cash_session,static/description/icon.png"
               sequence="55"/>
 
     <!-- ============================================================ -->
