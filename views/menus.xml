@@ -1,24 +1,61 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <menuitem id="menu_cash_session_root"
-              name="Cajas"
-              parent="account.menu_finance"
-              sequence="20"/>
 
+    <!-- ============================================================ -->
+    <!-- App raíz independiente (no dentro de Facturación) -->
+    <!-- ============================================================ -->
+    <menuitem id="menu_cash_session_root"
+              name="Caja"
+              sequence="55"/>
+
+    <!-- ============================================================ -->
+    <!-- 1. Operación -->
+    <!-- ============================================================ -->
     <menuitem id="menu_cash_session_sessions"
               name="Sesiones de caja"
               parent="menu_cash_session_root"
               action="action_cash_session"
               sequence="10"/>
 
+    <menuitem id="menu_cash_register_main"
+              name="Cajas físicas"
+              parent="menu_cash_session_root"
+              action="action_cash_register"
+              sequence="20"/>
+
+    <!-- ============================================================ -->
+    <!-- 2. Ayuda -->
+    <!-- ============================================================ -->
+    <menuitem id="menu_cash_session_help_root"
+              name="Ayuda"
+              parent="menu_cash_session_root"
+              sequence="80"/>
+
+    <menuitem id="menu_cash_session_help_faq"
+              name="Preguntas frecuentes"
+              parent="menu_cash_session_help_root"
+              action="action_cash_session_help_faq"
+              sequence="10"/>
+
+    <menuitem id="menu_cash_session_help_howto"
+              name="Cómo funciona"
+              parent="menu_cash_session_help_root"
+              action="action_cash_session_help_howto"
+              sequence="20"/>
+
+    <!-- ============================================================ -->
+    <!-- 3. Configuración -->
+    <!-- ============================================================ -->
     <menuitem id="menu_cash_session_config_root"
               name="Configuración"
               parent="menu_cash_session_root"
+              groups="group_cash_manager"
               sequence="90"/>
 
-    <menuitem id="menu_cash_register"
+    <menuitem id="menu_cash_register_config"
               name="Cajas físicas"
               parent="menu_cash_session_config_root"
               action="action_cash_register"
               sequence="10"/>
+
 </odoo>

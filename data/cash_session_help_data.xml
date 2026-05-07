@@ -1,0 +1,204 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+
+    <!-- ============================================================ -->
+    <!-- HOWTO — Cómo funciona el sistema -->
+    <!-- ============================================================ -->
+
+    <record id="howto_01_concepts" model="cash.session.help">
+        <field name="kind">howto</field>
+        <field name="sequence">10</field>
+        <field name="name">Conceptos básicos</field>
+        <field name="short_answer">Caja física, sesión (turno) y arqueo: las tres ideas centrales del módulo.</field>
+        <field name="content"><![CDATA[
+<h3>1. Caja física (cash.register)</h3>
+<p>Es la representación de un mostrador o punto de cobro real. Una caja agrupa varios diarios contables (efectivo, cheques, tarjetas) y define quién está autorizado a operarla y si puede pagar a proveedores.</p>
+
+<h3>2. Sesión (cash.session)</h3>
+<p>Es un turno de operación de la caja. Pasa por cuatro estados: <b>Borrador → Abierta → En cierre → Cerrada</b>. Al abrir se carga el arqueo físico inicial; al cerrar se cuenta el dinero real y se transfiere lo recaudado a la caja central.</p>
+
+<h3>3. Línea de arqueo (cash.session.line)</h3>
+<p>Una línea por diario y momento. En la apertura, registra cuánto había de cada medio antes del turno. En el cierre, registra cuánto hay físicamente y calcula la diferencia respecto al teórico (suma de cobros y pagos posteados durante el turno).</p>
+        ]]></field>
+    </record>
+
+    <record id="howto_02_apertura" model="cash.session.help">
+        <field name="kind">howto</field>
+        <field name="sequence">20</field>
+        <field name="name">Cómo abrir un turno</field>
+        <field name="short_answer">Crear sesión, cargar arqueo inicial y generar los extractos.</field>
+        <field name="content"><![CDATA[
+<h3>Pasos</h3>
+<ol>
+  <li>Andá a <b>Caja → Sesiones de caja</b> y hacé clic en <b>Nuevo</b>.</li>
+  <li>Elegí la <b>caja física</b>. El responsable se completa automáticamente con tu usuario.</li>
+  <li>Hacé clic en <b>Abrir sesión</b>. El sistema crea las líneas de apertura (una por diario).</li>
+  <li>En cada línea, cargá el <b>arqueo físico inicial</b> (cuánto había antes de empezar el turno).</li>
+  <li>Hacé clic en <b>Crear extractos</b>. Eso genera un account.bank.statement por diario con el balance de inicio.</li>
+</ol>
+
+<h3>Validaciones automáticas</h3>
+<ul>
+  <li>No se puede abrir una sesión si la caja ya tiene otra abierta o en cierre.</li>
+  <li>Si la caja tiene una lista de responsables autorizados, el usuario tiene que estar en esa lista.</li>
+</ul>
+        ]]></field>
+    </record>
+
+    <record id="howto_03_operacion" model="cash.session.help">
+        <field name="kind">howto</field>
+        <field name="sequence">30</field>
+        <field name="name">Cómo operar durante el turno</field>
+        <field name="short_answer">Registrar cobros y pagos como siempre; el módulo los suma automáticamente.</field>
+        <field name="content"><![CDATA[
+<h3>Cobros</h3>
+<p>Cargá los pagos recibidos como en el flujo normal: desde una factura, hacé <b>Pagar</b> y elegí el diario correspondiente (Efectivo, Cheques, Visa, Mastercard…). El módulo suma automáticamente cada pago al teórico de la sesión.</p>
+
+<h3>Pagos a proveedores</h3>
+<p>Si la caja tiene <b>Permite pagos a proveedores = No</b>, el sistema bloquea cualquier intento de registrar un pago saliente desde un diario de la caja. Es típico de cajas de mostrador: solo Caja Central paga proveedores.</p>
+
+<h3>Visualización en tiempo real</h3>
+<p>Mientras la sesión está abierta, podés volver a verla y revisar los movimientos. El campo <b>Teórico</b> de cada línea de cierre se actualiza con cada pago posteado.</p>
+        ]]></field>
+    </record>
+
+    <record id="howto_04_cierre" model="cash.session.help">
+        <field name="kind">howto</field>
+        <field name="sequence">40</field>
+        <field name="name">Cómo cerrar el turno</field>
+        <field name="short_answer">Iniciar cierre, contar lo físico y validar. La transferencia a Caja Central es automática.</field>
+        <field name="content"><![CDATA[
+<h3>Pasos</h3>
+<ol>
+  <li>En la sesión abierta, hacé clic en <b>Iniciar cierre</b>. El sistema crea las líneas de cierre, una por diario, con el <b>Teórico</b> calculado.</li>
+  <li>Hacé el recuento físico real y cargá el monto en cada línea como <b>Físico</b>.</li>
+  <li>El sistema calcula automáticamente la <b>Diferencia</b> (Físico − Teórico). Positivo = sobrante, negativo = faltante.</li>
+  <li>Si hay diferencia, completá el campo <b>Observaciones del cierre</b> con la explicación.</li>
+  <li>Hacé clic en <b>Validar cierre</b>.</li>
+</ol>
+
+<h3>Qué pasa al validar</h3>
+<ul>
+  <li>Cada extracto bancario se postea con el balance final real cargado.</li>
+  <li>La diferencia (faltante o sobrante) se imputa a la cuenta de diferencias configurada en la compañía.</li>
+  <li>Se genera un asiento contable de transferencia que mueve el efectivo y los cheques de tercero a la caja central. Las tarjetas <b>no</b> se transfieren — quedan en sus diarios hasta la acreditación bancaria.</li>
+  <li>La sesión pasa a estado <b>Cerrada</b>.</li>
+</ul>
+        ]]></field>
+    </record>
+
+    <record id="howto_05_caja_central" model="cash.session.help">
+        <field name="kind">howto</field>
+        <field name="sequence">50</field>
+        <field name="name">Caja Central y diferencias</field>
+        <field name="short_answer">Dónde aterriza el dinero al cierre y cómo se imputan los desajustes.</field>
+        <field name="content"><![CDATA[
+<h3>Caja Central</h3>
+<p>Es un diario contable adicional configurado en la <b>compañía</b> (campo <i>Caja central — destino de transferencia al cierre</i>). Recibe el efectivo y los cheques de tercero recaudados al cerrar cualquier sesión. Se administra por separado: el contador o el responsable hace los retiros, depósitos bancarios o pagos a proveedores desde ahí.</p>
+
+<h3>Cuenta de diferencias</h3>
+<p>Cuando el recuento físico al cierre no coincide con el teórico, la diferencia se imputa a la <b>Cuenta de diferencias de caja</b> también configurada en la compañía. Sobrantes y faltantes van todos a la misma cuenta.</p>
+
+<h3>Por qué las tarjetas no se transfieren</h3>
+<p>Visa, Mastercard y similares tienen un ciclo de acreditación bancaria propio. Mover el monto al momento del cierre causaría un descalce con lo que efectivamente entra al banco días después. Por eso se quedan en sus diarios hasta que se concilian con el extracto real.</p>
+        ]]></field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- FAQ — Preguntas frecuentes -->
+    <!-- ============================================================ -->
+
+    <record id="faq_01_dos_sesiones" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">10</field>
+        <field name="name">¿Puedo tener dos sesiones abiertas en la misma caja?</field>
+        <field name="short_answer">No. Solo una sesión por caja a la vez.</field>
+        <field name="content"><![CDATA[
+<p>El sistema impide abrir una segunda sesión si la primera todavía está en estado <b>Abierta</b> o <b>En cierre</b>. Hay que cerrar la sesión actual antes de abrir una nueva en la misma caja física.</p>
+<p><b>Por qué:</b> mantener una sola sesión activa por caja garantiza que cada cobro se asigne sin ambigüedad a un turno y un responsable concreto.</p>
+        ]]></field>
+    </record>
+
+    <record id="faq_02_diferencia_obs" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">20</field>
+        <field name="name">¿Por qué no me deja cerrar con diferencia?</field>
+        <field name="short_answer">Porque toda diferencia exige una observación que la justifique.</field>
+        <field name="content"><![CDATA[
+<p>Si el cierre tiene un <b>sobrante</b> o un <b>faltante</b>, el campo <b>Observaciones del cierre</b> es obligatorio. Cargá ahí qué pasó (vuelto mal entregado, cobro no registrado, billete falso, etc.) y volvé a validar.</p>
+<p>Adicionalmente, la <b>compañía</b> tiene que tener configurada la <i>Cuenta de diferencias de caja</i>; si no, el cierre con diferencia se bloquea para no perder la imputación contable.</p>
+        ]]></field>
+    </record>
+
+    <record id="faq_03_visa_no_transfiere" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">30</field>
+        <field name="name">¿Por qué Visa y Mastercard no aparecen en la transferencia?</field>
+        <field name="short_answer">Las tarjetas no se transfieren al cierre — quedan en sus diarios hasta la acreditación bancaria.</field>
+        <field name="content"><![CDATA[
+<p>En el campo <b>Tipo en caja</b> de cada diario, las tarjetas están marcadas como <b>Tarjeta</b>. Eso le dice al módulo que el dinero todavía no está disponible (lo libera el banco días después). Solo los diarios marcados como <b>Efectivo</b> y <b>Cheques de terceros</b> se transfieren a Caja Central al cerrar.</p>
+        ]]></field>
+    </record>
+
+    <record id="faq_04_pago_proveedor_bloqueado" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">40</field>
+        <field name="name">¿Por qué no me deja pagar a un proveedor desde la caja?</field>
+        <field name="short_answer">La caja del mostrador no autoriza pagos salientes — eso lo hace Caja Central.</field>
+        <field name="content"><![CDATA[
+<p>Si intentás registrar un pago a proveedor (<i>account.payment outbound</i>) desde un diario que pertenece a una caja con <b>Permite pagos a proveedores = No</b>, el sistema bloquea con un mensaje claro.</p>
+<p>Para pagar proveedores, usá el diario de <b>Caja Central</b> que sí está autorizado. Es la forma de mantener el control de salidas separado de la operación de mostrador.</p>
+<p>Si querés que una caja específica sí pueda pagar, marcá <b>Permite pagos a proveedores = Sí</b> en su configuración.</p>
+        ]]></field>
+    </record>
+
+    <record id="faq_05_teorico_cero" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">50</field>
+        <field name="name">El "Teórico" me da cero aunque cargué pagos. ¿Qué pasa?</field>
+        <field name="short_answer">Asegurate de que los pagos estén posteados y dentro de la fecha de la sesión.</field>
+        <field name="content"><![CDATA[
+<p>El teórico se calcula sumando los <b>account.payment</b> cuyo asiento está <b>posteado</b>, en el diario correspondiente, con fecha entre la apertura y el cierre de la sesión.</p>
+<p>Si el teórico te da cero:</p>
+<ul>
+  <li>Verificá que cada pago esté en estado <b>Pagado</b> o <b>En proceso</b> (su asiento contable tiene que estar posteado).</li>
+  <li>Verificá que el campo <i>Fecha</i> del pago sea posterior o igual a la apertura de la sesión.</li>
+  <li>Verificá que el diario del pago coincida exactamente con el de la línea de cierre.</li>
+</ul>
+        ]]></field>
+    </record>
+
+    <record id="faq_06_archivar_session" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">60</field>
+        <field name="name">¿Puedo borrar una sesión cerrada?</field>
+        <field name="short_answer">No, pero sí podés revisar el asiento contable de la transferencia y los movimientos.</field>
+        <field name="content"><![CDATA[
+<p>Las sesiones cerradas son inmutables: tienen asientos contables asociados (estados de cuenta posteados y la transferencia a Caja Central) que el sistema no permite eliminar para preservar el historial.</p>
+<p>Si necesitás corregir un cierre, lo correcto es generar un asiento contable manual de ajuste con la diferencia que corresponda y dejar la observación que explique el cambio.</p>
+        ]]></field>
+    </record>
+
+    <record id="faq_07_responsable_no_autorizado" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">70</field>
+        <field name="name">¿Qué hago si el sistema dice que no estoy autorizado a operar la caja?</field>
+        <field name="short_answer">El administrador tiene que agregarte a la lista de responsables de esa caja.</field>
+        <field name="content"><![CDATA[
+<p>En la configuración de la caja física hay un campo <b>Responsables autorizados</b>. Si esa lista no está vacía, solo los usuarios incluidos pueden abrir y cerrar sesiones en esa caja.</p>
+<p>Pedile al administrador (perfil <b>Cash Session — Manager</b>) que te agregue, o que deje la lista vacía si querés que cualquier usuario con permisos pueda operarla.</p>
+        ]]></field>
+    </record>
+
+    <record id="faq_08_multi_compania" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">80</field>
+        <field name="name">¿Puede haber cajas en distintas compañías?</field>
+        <field name="short_answer">Sí. Cada caja pertenece a una compañía y opera con sus propios diarios.</field>
+        <field name="content"><![CDATA[
+<p>El módulo es multi-compañía nativo. Cada caja física tiene un campo <b>Compañía</b> y todos sus diarios deben pertenecer a esa misma compañía. La cuenta de diferencias y la caja central también son por compañía.</p>
+<p>Si el grupo opera con dos compañías legales (por ejemplo, una principal y una paralela), cada una tiene su propio set de cajas, su propia caja central y su propia cuenta de diferencias.</p>
+        ]]></field>
+    </record>
+
+</odoo>

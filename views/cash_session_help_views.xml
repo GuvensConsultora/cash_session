@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!-- ============================================================ -->
+    <!-- Vista list -->
+    <!-- ============================================================ -->
+    <record id="view_cash_session_help_list" model="ir.ui.view">
+        <field name="name">cash.session.help.list</field>
+        <field name="model">cash.session.help</field>
+        <field name="arch" type="xml">
+            <list string="Ayuda" default_order="kind, sequence">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="short_answer" optional="show"/>
+                <field name="kind" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Vista form -->
+    <!-- ============================================================ -->
+    <record id="view_cash_session_help_form" model="ir.ui.view">
+        <field name="name">cash.session.help.form</field>
+        <field name="model">cash.session.help</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="¿Cómo abro una sesión?"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="kind"/>
+                            <field name="sequence"/>
+                        </group>
+                        <group>
+                            <field name="active" invisible="1"/>
+                        </group>
+                    </group>
+                    <group string="Resumen">
+                        <field name="short_answer" nolabel="1" placeholder="Respuesta en una línea"/>
+                    </group>
+                    <group string="Contenido">
+                        <field name="content" nolabel="1"/>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Vista kanban (más amena para FAQ) -->
+    <!-- ============================================================ -->
+    <record id="view_cash_session_help_kanban" model="ir.ui.view">
+        <field name="name">cash.session.help.kanban</field>
+        <field name="model">cash.session.help</field>
+        <field name="arch" type="xml">
+            <kanban default_order="kind, sequence" class="o_kanban_dashboard">
+                <field name="name"/>
+                <field name="short_answer"/>
+                <field name="kind"/>
+                <templates>
+                    <t t-name="card">
+                        <div class="oe_kanban_card oe_kanban_global_click p-2">
+                            <div class="o_kanban_record_top">
+                                <strong><field name="name"/></strong>
+                            </div>
+                            <div class="o_kanban_record_body text-muted">
+                                <field name="short_answer"/>
+                            </div>
+                        </div>
+                    </t>
+                </templates>
+            </kanban>
+        </field>
+    </record>
+
+    <!-- ============================================================ -->
+    <!-- Acciones -->
+    <!-- ============================================================ -->
+    <record id="action_cash_session_help_faq" model="ir.actions.act_window">
+        <field name="name">Preguntas frecuentes</field>
+        <field name="res_model">cash.session.help</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('kind', '=', 'faq')]</field>
+        <field name="context">{'default_kind': 'faq'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aún no hay preguntas frecuentes</p>
+            <p>Agregá una pregunta frecuente con su respuesta para que el equipo la consulte.</p>
+        </field>
+    </record>
+
+    <record id="action_cash_session_help_howto" model="ir.actions.act_window">
+        <field name="name">Cómo funciona el sistema</field>
+        <field name="res_model">cash.session.help</field>
+        <field name="view_mode">kanban,list,form</field>
+        <field name="domain">[('kind', '=', 'howto')]</field>
+        <field name="context">{'default_kind': 'howto'}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aún no hay guías</p>
+            <p>Agregá guías paso a paso para explicar el flujo del módulo.</p>
+        </field>
+    </record>
+
+</odoo>

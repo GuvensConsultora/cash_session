@@ -5,3 +5,5 @@ access_cash_session_user,cash.session user,model_cash_session,group_cash_user,1,
 access_cash_session_manager,cash.session manager,model_cash_session,group_cash_manager,1,1,1,1
 access_cash_session_line_user,cash.session.line user,model_cash_session_line,group_cash_user,1,1,1,1
 access_cash_session_line_manager,cash.session.line manager,model_cash_session_line,group_cash_manager,1,1,1,1
+access_cash_session_help_user,cash.session.help user,model_cash_session_help,group_cash_user,1,0,0,0
+access_cash_session_help_manager,cash.session.help manager,model_cash_session_help,group_cash_manager,1,1,1,1
