@@ -76,13 +76,19 @@ class CashSessionLine(models.Model):
             # En Odoo 19 el state de account.payment puede ser 'paid', 'in_process'
             # o 'posted' según la versión. Usamos move_id.state == 'posted' como
             # criterio estable: el pago efectivamente posteó su asiento contable.
+            #
+            # IMPORTANTE: filtramos por create_date (datetime) y NO por date
+            # (que es solo Date). Si abrimos una sesión nueva el mismo día
+            # que tuvimos otra, los pagos del cierre anterior tienen el
+            # mismo date pero un create_date previo, así que con datetime
+            # quedan correctamente fuera del rango.
             domain = [
                 ('journal_id', '=', l.journal_id.id),
                 ('move_id.state', '=', 'posted'),
-                ('date', '>=', fields.Date.to_date(session.date_open)),
+                ('create_date', '>=', session.date_open),
             ]
             if session.date_close:
-                domain.append(('date', '<=', fields.Date.to_date(session.date_close)))
+                domain.append(('create_date', '<=', session.date_close))
             payments = Payment.search(domain)
             inbound = sum(p.amount for p in payments if p.payment_type == 'inbound')
             outbound = sum(p.amount for p in payments if p.payment_type == 'outbound')
