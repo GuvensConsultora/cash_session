@@ -1,6 +1,6 @@
 {
     'name': 'Caja — Sesiones con turnos rotativos',
-    'version': '19.0.2.0.3',
+    'version': '19.0.2.0.4',
     'category': 'Caja',
     'summary': 'Operación de cajas físicas con apertura/arqueo/cierre y '
                'transferencia automática a caja central. Multi-compañía, '
