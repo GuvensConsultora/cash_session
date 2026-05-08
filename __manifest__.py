@@ -1,6 +1,6 @@
 {
     'name': 'Caja — Sesiones con turnos rotativos',
-    'version': '19.0.2.1.0',
+    'version': '19.0.2.2.0',
     'category': 'Caja',
     'summary': 'Operación de cajas físicas con apertura/arqueo/cierre y '
                'transferencia automática a caja central. Multi-compañía, '
@@ -43,6 +43,7 @@ Características:
         'views/cash_session_views.xml',
         'views/cash_session_help_views.xml',
         'views/menus.xml',
+        'report/cash_session_handover_report.xml',
     ],
     'installable': True,
     'application': True,

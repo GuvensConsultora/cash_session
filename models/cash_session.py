@@ -64,6 +64,81 @@ class CashSession(models.Model):
         related='company_id.currency_id', readonly=True,
     )
 
+    # ------------------------------------------------------------------
+    # Datos para la minuta de rendición
+    # ------------------------------------------------------------------
+    payment_ids = fields.Many2many(
+        'account.payment', string='Pagos de la sesión',
+        compute='_compute_session_payments',
+    )
+    cash_payment_ids = fields.Many2many(
+        'account.payment', string='Pagos en efectivo',
+        compute='_compute_session_payments',
+    )
+    check_payment_ids = fields.Many2many(
+        'account.payment', string='Pagos con cheque',
+        compute='_compute_session_payments',
+    )
+    card_payment_ids = fields.Many2many(
+        'account.payment', string='Pagos con tarjeta',
+        compute='_compute_session_payments',
+    )
+    handover_check_ids = fields.Many2many(
+        'l10n_latam.check', string='Cheques recibidos',
+        compute='_compute_session_payments',
+    )
+    handover_cash_total = fields.Monetary(
+        string='Total efectivo', compute='_compute_session_payments',
+        currency_field='currency_id',
+    )
+    handover_check_total = fields.Monetary(
+        string='Total cheques', compute='_compute_session_payments',
+        currency_field='currency_id',
+    )
+    handover_card_total = fields.Monetary(
+        string='Total tarjetas', compute='_compute_session_payments',
+        currency_field='currency_id',
+    )
+
+    @api.depends('date_open', 'date_close', 'cash_register_id.journal_ids', 'state')
+    def _compute_session_payments(self):
+        Payment = self.env['account.payment']
+        Check = self.env['l10n_latam.check']
+        for s in self:
+            if not s.date_open:
+                s.payment_ids = Payment
+                s.cash_payment_ids = Payment
+                s.check_payment_ids = Payment
+                s.card_payment_ids = Payment
+                s.handover_check_ids = Check
+                s.handover_cash_total = 0.0
+                s.handover_check_total = 0.0
+                s.handover_card_total = 0.0
+                continue
+            domain = [
+                ('journal_id', 'in', s.cash_register_id.journal_ids.ids),
+                ('move_id.state', '=', 'posted'),
+                ('create_date', '>=', s.date_open),
+                ('payment_type', '=', 'inbound'),
+            ]
+            if s.date_close:
+                domain.append(('create_date', '<=', s.date_close))
+            payments = Payment.search(domain)
+            s.payment_ids = payments
+            s.cash_payment_ids = payments.filtered(
+                lambda p: p.journal_id.cash_session_kind == 'cash'
+            )
+            s.check_payment_ids = payments.filtered(
+                lambda p: p.journal_id.cash_session_kind == 'third_party_check'
+            )
+            s.card_payment_ids = payments.filtered(
+                lambda p: p.journal_id.cash_session_kind == 'card'
+            )
+            s.handover_check_ids = s.check_payment_ids.mapped('l10n_latam_new_check_ids')
+            s.handover_cash_total = sum(s.cash_payment_ids.mapped('amount'))
+            s.handover_check_total = sum(s.check_payment_ids.mapped('amount'))
+            s.handover_card_total = sum(s.card_payment_ids.mapped('amount'))
+
     @api.depends('closing_line_ids.difference')
     def _compute_difference(self):
         for s in self:
@@ -274,6 +349,13 @@ class CashSession(models.Model):
         })
         move.action_post()
         self.transfer_move_id = move.id
+
+    def action_print_handover(self):
+        """Imprime el report de minuta de rendición de la sesión."""
+        self.ensure_one()
+        return self.env.ref(
+            'cash_session.action_report_cash_session_handover'
+        ).report_action(self)
 
     def action_view_transfer_move(self):
         self.ensure_one()

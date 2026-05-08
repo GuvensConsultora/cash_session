@@ -223,6 +223,26 @@
         ]]></field>
     </record>
 
+    <record id="faq_10_minuta_rendicion" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">100</field>
+        <field name="name">¿Qué es la minuta de rendición y cómo se imprime?</field>
+        <field name="short_answer">Es un comprobante interno con el detalle de efectivo y cheques entregados. Se imprime desde la sesión cerrada.</field>
+        <field name="content"><![CDATA[
+<p>La minuta de rendición es el comprobante físico de la entrega de fondos del cajero saliente al cajero central. Lista:</p>
+<ul>
+  <li><b>Efectivo:</b> apertura, cobros, físico final y diferencia por diario, más el total entregado a Caja Central.</li>
+  <li><b>Cheques:</b> tabla detallada con número, banco, librador, cliente, fecha de pago e importe.</li>
+  <li><b>Tarjetas:</b> total informativo (no se rinden físicamente — quedan en sus diarios hasta la acreditación bancaria).</li>
+  <li><b>Total general entregado</b> y líneas de firma para el responsable saliente y el cajero central.</li>
+</ul>
+<h3>Cómo imprimirla</h3>
+<p>En la sesión <b>cerrada</b>, hacé clic en el botón <b>Imprimir minuta de rendición</b> de la barra superior. Se descarga un PDF que se imprime, ambos firman y queda como respaldo de la operación.</p>
+<h3>Por qué no genera asiento contable</h3>
+<p>Los movimientos contables ya están registrados en cada cobranza (cuando entró el cheque a la cartera) y en el asiento de transferencia de efectivo (que se genera al cerrar la sesión). La rendición es solo el traspaso físico de los billetes y cheques entre dos personas — no es un hecho económico nuevo. Por eso la minuta es solo documental.</p>
+        ]]></field>
+    </record>
+
     <record id="faq_09_cheque_no_aparece_cartera" model="cash.session.help">
         <field name="kind">faq</field>
         <field name="sequence">90</field>

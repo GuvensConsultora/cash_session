@@ -1,0 +1,196 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="action_report_cash_session_handover" model="ir.actions.report">
+        <field name="name">Minuta de rendición</field>
+        <field name="model">cash.session</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">cash_session.report_handover</field>
+        <field name="report_file">cash_session.report_handover</field>
+        <field name="binding_model_id" ref="model_cash_session"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_handover_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="o.with_context(lang=o.responsible_id.lang or 'es_AR')"/>
+            <div class="page">
+                <h2 class="mt-4">Minuta de rendición de caja</h2>
+                <p class="text-muted">
+                    Comprobante interno de entrega de fondos del responsable de
+                    la caja al cajero central. No genera asientos contables
+                    adicionales — los movimientos contables ya están registrados
+                    en cada cobranza y en el asiento de transferencia de efectivo.
+                </p>
+
+                <div class="row mt-4 mb-4">
+                    <div class="col-6">
+                        <strong>Sesión:</strong> <span t-field="o.name"/><br/>
+                        <strong>Caja:</strong> <span t-field="o.cash_register_id.name"/><br/>
+                        <strong>Responsable saliente:</strong> <span t-field="o.responsible_id.name"/>
+                    </div>
+                    <div class="col-6">
+                        <strong>Apertura:</strong> <span t-field="o.date_open"/><br/>
+                        <strong>Cierre:</strong> <span t-field="o.date_close"/><br/>
+                        <strong>Compañía:</strong> <span t-field="o.company_id.name"/>
+                    </div>
+                </div>
+
+                <!-- Bloque efectivo -->
+                <h4 class="mt-4">Efectivo</h4>
+                <table class="table table-sm">
+                    <thead>
+                        <tr>
+                            <th>Diario</th>
+                            <th class="text-end">Apertura</th>
+                            <th class="text-end">Cobros</th>
+                            <th class="text-end">Físico final</th>
+                            <th class="text-end">Diferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <t t-foreach="o.closing_line_ids.filtered(lambda l: l.journal_id.cash_session_kind == 'cash')" t-as="cl">
+                            <tr>
+                                <td><span t-field="cl.journal_id.name"/></td>
+                                <td class="text-end">
+                                    <t t-set="opl" t-value="o.opening_line_ids.filtered(lambda l: l.journal_id == cl.journal_id)[:1]"/>
+                                    <span t-out="opl.physical_amount or 0.0" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-out="cl.theoretical_amount - (opl.physical_amount or 0.0)" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="cl.physical_amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="cl.difference" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                            </tr>
+                        </t>
+                    </tbody>
+                </table>
+                <p>
+                    <strong>Total efectivo entregado a Caja Central:</strong>
+                    <span t-out="sum(o.closing_line_ids.filtered(lambda l: l.journal_id.cash_session_kind == 'cash').mapped('physical_amount'))"
+                          t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                </p>
+
+                <!-- Bloque cheques -->
+                <h4 class="mt-4">Cheques de tercero recibidos</h4>
+                <t t-if="o.handover_check_ids">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Diario</th>
+                                <th>N° cheque</th>
+                                <th>Banco</th>
+                                <th>Librador</th>
+                                <th>Cliente</th>
+                                <th class="text-center">Fecha de pago</th>
+                                <th class="text-end">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="o.handover_check_ids.sorted('payment_date')" t-as="ch">
+                                <tr>
+                                    <td><span t-field="ch.original_journal_id.name"/></td>
+                                    <td><span t-field="ch.name"/></td>
+                                    <td><span t-field="ch.bank_id.name"/></td>
+                                    <td><span t-field="ch.issuer_vat"/></td>
+                                    <td><span t-field="ch.partner_id.name"/></td>
+                                    <td class="text-center"><span t-field="ch.payment_date"/></td>
+                                    <td class="text-end">
+                                        <span t-field="ch.amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="6" class="text-end"><strong>Total cheques:</strong></td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-field="o.handover_check_total" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <p class="text-muted" style="font-size: 0.9em;">
+                        Los cheques se entregan físicamente al cajero central y quedan
+                        en la cartera de la compañía (cuenta de Cheques de Terceros).
+                        No se contabiliza un movimiento adicional por la rendición.
+                    </p>
+                </t>
+                <t t-else="">
+                    <p class="text-muted">Sin cheques recibidos en esta sesión.</p>
+                </t>
+
+                <!-- Bloque tarjetas (informativo) -->
+                <t t-if="o.handover_card_total">
+                    <h4 class="mt-4">Tarjetas (informativo)</h4>
+                    <p>
+                        Total cobrado con tarjetas:
+                        <strong>
+                            <span t-field="o.handover_card_total" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                        </strong>
+                    </p>
+                    <p class="text-muted" style="font-size: 0.9em;">
+                        Las tarjetas no se rinden físicamente. Permanecen en sus
+                        diarios hasta la acreditación bancaria.
+                    </p>
+                </t>
+
+                <!-- Total general -->
+                <div class="mt-4 p-3" style="background-color: #f5f0f8; border-radius: 6px;">
+                    <h4>Total general entregado</h4>
+                    <p class="mb-1">
+                        Efectivo:
+                        <span t-out="sum(o.closing_line_ids.filtered(lambda l: l.journal_id.cash_session_kind == 'cash').mapped('physical_amount'))"
+                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                    </p>
+                    <p class="mb-1">
+                        Cheques:
+                        <span t-field="o.handover_check_total" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                    </p>
+                    <h5 class="mt-2">
+                        Total:
+                        <span t-out="sum(o.closing_line_ids.filtered(lambda l: l.journal_id.cash_session_kind == 'cash').mapped('physical_amount')) + o.handover_check_total"
+                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                    </h5>
+                </div>
+
+                <!-- Observaciones -->
+                <t t-if="o.closing_observations">
+                    <h4 class="mt-4">Observaciones del cierre</h4>
+                    <p t-field="o.closing_observations"/>
+                </t>
+
+                <!-- Firmas -->
+                <div class="row mt-5">
+                    <div class="col-6 text-center">
+                        <div style="border-top: 1px solid #000; padding-top: 8px; margin-top: 60px;">
+                            <strong>Entrega</strong><br/>
+                            <span t-field="o.responsible_id.name"/>
+                        </div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div style="border-top: 1px solid #000; padding-top: 8px; margin-top: 60px;">
+                            <strong>Recibe (Cajero Central)</strong><br/>
+                            Aclaración:
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_handover">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="o">
+                <t t-call="cash_session.report_handover_document"/>
+            </t>
+        </t>
+    </template>
+
+</odoo>

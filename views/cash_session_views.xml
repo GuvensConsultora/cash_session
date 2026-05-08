@@ -45,6 +45,9 @@
                             type="object" class="btn-primary"
                             invisible="state != 'closing'" icon="fa-check-circle"
                             confirm="¿Confirmar el cierre? Se postearán los extractos y se generará el asiento de transferencia a caja central."/>
+                    <button name="action_print_handover" string="Imprimir minuta de rendición"
+                            type="object" invisible="state != 'closed'"
+                            icon="fa-print"/>
                     <button name="action_view_transfer_move" string="Ver asiento transferencia"
                             type="object" invisible="not transfer_move_id"
                             icon="fa-external-link"/>
