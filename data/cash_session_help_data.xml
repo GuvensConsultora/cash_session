@@ -81,7 +81,9 @@
 <ul>
   <li>Cada extracto bancario se postea con el balance final real cargado.</li>
   <li>La diferencia (faltante o sobrante) se imputa a la cuenta de diferencias configurada en la compañía.</li>
-  <li>Se genera un asiento contable de transferencia que mueve el efectivo y los cheques de tercero a la caja central. Las tarjetas <b>no</b> se transfieren — quedan en sus diarios hasta la acreditación bancaria.</li>
+  <li>Se genera un asiento contable de transferencia que mueve <b>solo el efectivo</b> a la caja central.</li>
+  <li>Los <b>cheques de tercero</b> no se transfieren: quedan en la cuenta de cartera (Third Party Checks) de la compañía. Cada cheque es un instrumento individual que se administra desde <b>Contabilidad → Clientes → Cheques de Terceros</b> hasta que se endosa, deposita o devuelve.</li>
+  <li>Las <b>tarjetas</b> tampoco se transfieren — quedan en sus diarios hasta la acreditación bancaria.</li>
   <li>La sesión pasa a estado <b>Cerrada</b>.</li>
 </ul>
         ]]></field>
@@ -106,7 +108,7 @@
 <p>Andá a <b>Contabilidad → Clientes → Cheques de Terceros</b>. Vas a ver todos los cheques recibidos y todavía no entregados ni depositados.</p>
 
 <h3>Cierre de la caja</h3>
-<p>Al cerrar la sesión, el módulo transfiere los cheques en cartera al diario de Caja Central junto con el efectivo. Los cheques siguen apareciendo en la lista de Cheques de Terceros pero ahora con la caja central como diario actual.</p>
+<p>Al cerrar la sesión, los cheques <b>no</b> se transfieren a Caja Central: son instrumentos individuales que pertenecen a la cartera de la compañía. Siguen apareciendo en <b>Cheques de Terceros</b> con su diario de origen (Cheques Maipú o Cheques Godoy Cruz). Se administran desde ahí hasta el endoso, depósito o devolución, sin importar quién los cobró.</p>
 
 <h3>Operaciones posteriores con un cheque</h3>
 <ul>
@@ -124,7 +126,8 @@
         <field name="short_answer">Dónde aterriza el dinero al cierre y cómo se imputan los desajustes.</field>
         <field name="content"><![CDATA[
 <h3>Caja Central</h3>
-<p>Es un diario contable adicional configurado en la <b>compañía</b> (campo <i>Caja central — destino de transferencia al cierre</i>). Recibe el efectivo y los cheques de tercero recaudados al cerrar cualquier sesión. Se administra por separado: el contador o el responsable hace los retiros, depósitos bancarios o pagos a proveedores desde ahí.</p>
+<p>Es un diario contable adicional configurado en la <b>compañía</b> (campo <i>Caja central — destino de transferencia al cierre</i>). Recibe únicamente el <b>efectivo</b> recaudado al cerrar cualquier sesión. Se administra por separado: el contador o el responsable hace los retiros, depósitos bancarios o pagos a proveedores desde ahí.</p>
+<p>Los <b>cheques de tercero</b> no pasan por Caja Central: quedan en la cartera de la compañía (cuenta Third Party Checks) y se gestionan desde <i>Contabilidad → Clientes → Cheques de Terceros</i> independientemente de la caja física que los recibió.</p>
 
 <h3>Cuenta de diferencias</h3>
 <p>Cuando el recuento físico al cierre no coincide con el teórico, la diferencia se imputa a la <b>Cuenta de diferencias de caja</b> también configurada en la compañía. Sobrantes y faltantes van todos a la misma cuenta.</p>

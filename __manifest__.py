@@ -1,6 +1,6 @@
 {
     'name': 'Caja — Sesiones con turnos rotativos',
-    'version': '19.0.2.0.5',
+    'version': '19.0.2.1.0',
     'category': 'Caja',
     'summary': 'Operación de cajas físicas con apertura/arqueo/cierre y '
                'transferencia automática a caja central. Multi-compañía, '
@@ -24,7 +24,8 @@ Características:
 - Permite o bloquea pagos a proveedores desde la caja según cash_register.allow_payments_out.
 - Una sola sesión OPEN por caja (constraint).
 - Cierre con diferencia permitido con observaciones obligatorias.
-- Transferencia automática al cierre: efectivo + cheques de terceros a caja central.
+- Transferencia automática al cierre: solo efectivo a caja central
+  (cheques de terceros quedan en la cartera de la compañía).
 - Documentación in-app: FAQ y guías paso a paso.
     """,
     'author': 'Yagüven C.G.',

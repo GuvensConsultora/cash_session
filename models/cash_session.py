@@ -219,20 +219,27 @@ class CashSession(models.Model):
         self.state = 'closed'
 
     def _transfer_to_central(self):
-        """Genera un account.move por cada journal cuyo cash_session_kind sea
-        'cash' o 'third_party_check', moviendo el balance_end_real a la caja central."""
+        """Genera un account.move moviendo a la caja central únicamente
+        el efectivo (journals cash_session_kind='cash').
+
+        Los cheques de tercero NO se transfieren: quedan en su cuenta de
+        cartera (Third Party Checks) — son instrumentos individuales que
+        l10n_latam_check trackea por cheque, no por caja física. La caja
+        física es solo el lugar de recepción inicial; el cheque pertenece
+        a la cartera de la compañía hasta que se endosa/deposita/devuelve.
+        """
         self.ensure_one()
         company = self.company_id
         central = company.cash_central_journal_id
         if not central:
-            # Sin caja central configurada, nada que transferir
             return
 
         Move = self.env['account.move']
         lines_to_create = []
         for cl in self.closing_line_ids:
             j = cl.journal_id
-            if j.cash_session_kind not in ('cash', 'third_party_check'):
+            # Solo efectivo se transfiere a caja central
+            if j.cash_session_kind != 'cash':
                 continue
             amount = cl.physical_amount
             if not amount:
