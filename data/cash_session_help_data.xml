@@ -87,6 +87,36 @@
         ]]></field>
     </record>
 
+    <record id="howto_06_cheques_cartera" model="cash.session.help">
+        <field name="kind">howto</field>
+        <field name="sequence">60</field>
+        <field name="name">Cómo cobrar con cheque de tercero</field>
+        <field name="short_answer">El cheque queda automáticamente en cartera al postear el pago en un diario de cheques.</field>
+        <field name="content"><![CDATA[
+<h3>Pasos</h3>
+<ol>
+  <li>Desde la factura del cliente, hacé clic en <b>Pagar</b>.</li>
+  <li>Elegí el diario <b>Cheques Maipú</b> o <b>Cheques Godoy Cruz</b> según corresponda.</li>
+  <li>El método de pago se completa por defecto con <b>Cheques nuevos de tercero</b>.</li>
+  <li>Cargá los datos del cheque: <b>número</b>, <b>banco emisor</b> y <b>fecha de pago</b> (la del documento, no la de hoy).</li>
+  <li>Confirmá. El cheque queda <b>en cartera</b> a nombre del cliente.</li>
+</ol>
+
+<h3>Dónde ver los cheques en cartera</h3>
+<p>Andá a <b>Contabilidad → Clientes → Cheques de Terceros</b>. Vas a ver todos los cheques recibidos y todavía no entregados ni depositados.</p>
+
+<h3>Cierre de la caja</h3>
+<p>Al cerrar la sesión, el módulo transfiere los cheques en cartera al diario de Caja Central junto con el efectivo. Los cheques siguen apareciendo en la lista de Cheques de Terceros pero ahora con la caja central como diario actual.</p>
+
+<h3>Operaciones posteriores con un cheque</h3>
+<ul>
+  <li><b>Entregar a proveedor</b>: en una factura de proveedor, elegí el diario de cheques y método <b>Entrega de cheques de tercero</b>; seleccioná el cheque a entregar.</li>
+  <li><b>Devolución por rechazo</b>: usá <b>Devolución de cheques rechazados</b>.</li>
+  <li><b>Cobrar otra factura con un cheque ya en cartera</b>: usá <b>Cheques de tercero en cartera</b>.</li>
+</ul>
+        ]]></field>
+    </record>
+
     <record id="howto_05_caja_central" model="cash.session.help">
         <field name="kind">howto</field>
         <field name="sequence">50</field>
@@ -187,6 +217,22 @@
         <field name="content"><![CDATA[
 <p>En la configuración de la caja física hay un campo <b>Responsables autorizados</b>. Si esa lista no está vacía, solo los usuarios incluidos pueden abrir y cerrar sesiones en esa caja.</p>
 <p>Pedile al administrador (perfil <b>Cash Session — Manager</b>) que te agregue, o que deje la lista vacía si querés que cualquier usuario con permisos pueda operarla.</p>
+        ]]></field>
+    </record>
+
+    <record id="faq_09_cheque_no_aparece_cartera" model="cash.session.help">
+        <field name="kind">faq</field>
+        <field name="sequence">90</field>
+        <field name="name">Cobré con cheque y no aparece en Cheques de Terceros. ¿Por qué?</field>
+        <field name="short_answer">El método de pago tiene que ser "Cheques nuevos de tercero", no "Manual Payment".</field>
+        <field name="content"><![CDATA[
+<p>Para que un cheque entre a la cartera (<b>Contabilidad → Clientes → Cheques de Terceros</b>) el pago tiene que estar registrado con <b>método de pago = Cheques nuevos de tercero</b>. Si elegiste <i>Manual Payment</i>, el cobro queda contabilizado pero el cheque no se registra como instrumento individual y no aparece en la cartera.</p>
+<p>Cómo verificarlo:</p>
+<ul>
+  <li>Abrí el pago. En el campo <b>Método de pago</b> tiene que decir "Cheques nuevos de tercero".</li>
+  <li>Si dice "Manual Payment", cancelá el pago y volvé a registrarlo eligiendo el método correcto. El número de cheque, banco y fecha de pago son obligatorios.</li>
+</ul>
+<p>Los diarios <b>Cheques Maipú</b> y <b>Cheques Godoy Cruz</b> tienen el método de cheque como default — si te apareció Manual, fue porque alguien lo cambió a mano en el wizard.</p>
         ]]></field>
     </record>
 
