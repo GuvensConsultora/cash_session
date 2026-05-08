@@ -31,7 +31,7 @@ Características:
     'author': 'Yagüven C.G.',
     'website': 'https://yaguven.com.ar',
     'license': 'LGPL-3',
-    'depends': ['account'],
+    'depends': ['account', 'l10n_latam_check'],
     'data': [
         'security/cash_session_groups.xml',
         'security/ir.model.access.csv',
