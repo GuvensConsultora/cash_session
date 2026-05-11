@@ -83,6 +83,10 @@ class CashSession(models.Model):
         'account.payment', string='Pagos con tarjeta',
         compute='_compute_session_payments',
     )
+    transfer_payment_ids = fields.Many2many(
+        'account.payment', string='Transferencias bancarias',
+        compute='_compute_session_payments',
+    )
     handover_check_ids = fields.Many2many(
         'l10n_latam.check', string='Cheques recibidos',
         compute='_compute_session_payments',
@@ -99,6 +103,10 @@ class CashSession(models.Model):
         string='Total tarjetas', compute='_compute_session_payments',
         currency_field='currency_id',
     )
+    handover_transfer_total = fields.Monetary(
+        string='Total transferencias', compute='_compute_session_payments',
+        currency_field='currency_id',
+    )
 
     @api.depends('date_open', 'date_close', 'cash_register_id.journal_ids', 'state')
     def _compute_session_payments(self):
@@ -110,10 +118,12 @@ class CashSession(models.Model):
                 s.cash_payment_ids = Payment
                 s.check_payment_ids = Payment
                 s.card_payment_ids = Payment
+                s.transfer_payment_ids = Payment
                 s.handover_check_ids = Check
                 s.handover_cash_total = 0.0
                 s.handover_check_total = 0.0
                 s.handover_card_total = 0.0
+                s.handover_transfer_total = 0.0
                 continue
             domain = [
                 ('journal_id', 'in', s.cash_register_id.journal_ids.ids),
@@ -134,10 +144,14 @@ class CashSession(models.Model):
             s.card_payment_ids = payments.filtered(
                 lambda p: p.journal_id.cash_session_kind == 'card'
             )
+            s.transfer_payment_ids = payments.filtered(
+                lambda p: p.journal_id.cash_session_kind == 'bank'
+            )
             s.handover_check_ids = s.check_payment_ids.mapped('l10n_latam_new_check_ids')
             s.handover_cash_total = sum(s.cash_payment_ids.mapped('amount'))
             s.handover_check_total = sum(s.check_payment_ids.mapped('amount'))
             s.handover_card_total = sum(s.card_payment_ids.mapped('amount'))
+            s.handover_transfer_total = sum(s.transfer_payment_ids.mapped('amount'))
 
     @api.depends('closing_line_ids.difference')
     def _compute_difference(self):
@@ -194,16 +208,30 @@ class CashSession(models.Model):
                 u=self.responsible_id.display_name, c=register.display_name,
             ))
 
-        # Crear opening lines (1 por journal) si no existen
+        # Crear opening lines (1 por journal) si no existen.
+        # Para journals tipo cash, hereda el physical_amount del cierre
+        # anterior (caja chica que arranca con el saldo del viernes).
+        # Para cheques/tarjetas/banco arranca en 0 (cada sesión es nueva).
         Line = self.env['cash.session.line']
         existing_journals = self.opening_line_ids.mapped('journal_id')
         for j in register.journal_ids:
             if j in existing_journals:
                 continue
+            initial = 0.0
+            if j.cash_session_kind == 'cash':
+                prev_close = Line.search([
+                    ('journal_id', '=', j.id),
+                    ('kind', '=', 'close'),
+                    ('session_id.cash_register_id', '=', register.id),
+                    ('session_id.state', '=', 'closed'),
+                ], order='session_id desc', limit=1)
+                if prev_close:
+                    initial = prev_close.physical_amount
             Line.create({
                 'session_id': self.id,
                 'journal_id': j.id,
                 'kind': 'open',
+                'physical_amount': initial,
             })
 
         self.state = 'open'

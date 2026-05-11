@@ -125,6 +125,50 @@
                     <p class="text-muted">Sin cheques recibidos en esta sesión.</p>
                 </t>
 
+                <!-- Bloque transferencias bancarias (informativo) -->
+                <t t-if="o.transfer_payment_ids">
+                    <h4 class="mt-4">Transferencias bancarias recibidas</h4>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Diario</th>
+                                <th>N° comprobante</th>
+                                <th class="text-center">Fecha</th>
+                                <th class="text-end">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="o.transfer_payment_ids.sorted('date')" t-as="tp">
+                                <tr>
+                                    <td><span t-field="tp.partner_id.name"/></td>
+                                    <td><span t-field="tp.journal_id.name"/></td>
+                                    <td><span t-out="tp.memo or tp.ref or tp.name"/></td>
+                                    <td class="text-center"><span t-field="tp.date"/></td>
+                                    <td class="text-end">
+                                        <span t-field="tp.amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Total transferencias:</strong></td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-field="o.handover_transfer_total" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                    <p class="text-muted" style="font-size: 0.9em;">
+                        Las transferencias no se rinden físicamente — el cajero
+                        verifica el comprobante y la plata cae directo en cuenta bancaria.
+                        Se listan acá para trazabilidad.
+                    </p>
+                </t>
+
                 <!-- Bloque tarjetas (informativo) -->
                 <t t-if="o.handover_card_total">
                     <h4 class="mt-4">Tarjetas (informativo)</h4>

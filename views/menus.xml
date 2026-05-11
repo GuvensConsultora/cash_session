@@ -44,19 +44,8 @@
               action="action_cash_session_help_howto"
               sequence="20"/>
 
-    <!-- ============================================================ -->
-    <!-- 3. Configuración -->
-    <!-- ============================================================ -->
-    <menuitem id="menu_cash_session_config_root"
-              name="Configuración"
-              parent="menu_cash_session_root"
-              groups="group_cash_manager"
-              sequence="90"/>
-
-    <menuitem id="menu_cash_register_config"
-              name="Cajas físicas"
-              parent="menu_cash_session_config_root"
-              action="action_cash_register"
-              sequence="10"/>
+    <!-- Configuración movida fuera porque "Cajas físicas" ya aparece como
+         menú principal (menu_cash_register_main). Mantener ambos era
+         redundante y confuso para el cajero. -->
 
 </odoo>
