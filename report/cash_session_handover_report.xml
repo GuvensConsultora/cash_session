@@ -144,11 +144,8 @@
                                     <td><span t-field="tp.partner_id.name"/></td>
                                     <td><span t-field="tp.journal_id.name"/></td>
                                     <td>
-                                        <t t-if="tp.memo">
-                                            <span t-field="tp.memo"/>
-                                        </t>
-                                        <t t-elif="tp.payment_reference">
-                                            <span t-field="tp.payment_reference"/>
+                                        <t t-if="tp.transfer_reference">
+                                            <span t-field="tp.transfer_reference"/>
                                         </t>
                                         <t t-else="">
                                             <em class="text-muted">— sin nro de comprobante —</em>
@@ -174,9 +171,10 @@
                     </table>
                     <p class="text-muted" style="font-size: 0.9em;">
                         El N° de comprobante de transferencia (CoelSA o similar) lo
-                        carga el cajero al registrar el pago, en el campo "Memo" del
-                        recibo. No es el número de factura. Las transferencias no se
-                        rinden físicamente — la plata cae directo en cuenta bancaria.
+                        carga el cajero al registrar el pago, en el campo
+                        "N° comprobante de transferencia" del recibo. No se confunde
+                        con el N° de factura. Las transferencias no se rinden
+                        físicamente — la plata cae directo en cuenta bancaria.
                     </p>
                 </t>
 

@@ -5,6 +5,13 @@ from odoo.exceptions import UserError
 class AccountPayment(models.Model):
     _inherit = 'account.payment'
 
+    transfer_reference = fields.Char(
+        string='N° comprobante de transferencia',
+        help='Número de comprobante de la transferencia bancaria (CoelSA u '
+             'otro identificador del banco). El cajero lo carga al confirmar '
+             'el pago. Aparece en la minuta de rendición.',
+    )
+
     @api.constrains('journal_id', 'payment_type', 'state')
     def _check_cash_session_outbound(self):
         """Si el journal pertenece a una caja con allow_payments_out=False,
@@ -36,3 +43,29 @@ class AccountBankStatement(models.Model):
         'cash.session', string='Sesión de caja',
         ondelete='set null', copy=False,
     )
+
+
+class AccountPaymentRegister(models.TransientModel):
+    """El wizard que se abre al pagar una factura. Agregamos el campo
+    de N° de comprobante de transferencia para que el cajero lo cargue
+    explícitamente, sin que se confunda con el N° de factura que Odoo
+    autocompleta en Memo."""
+    _inherit = 'account.payment.register'
+
+    transfer_reference = fields.Char(
+        string='N° comprobante de transferencia',
+        help='Número de comprobante de la transferencia bancaria (CoelSA u '
+             'otro identificador del banco).',
+    )
+
+    def _create_payment_vals_from_wizard(self, batch_result):
+        vals = super()._create_payment_vals_from_wizard(batch_result)
+        if self.transfer_reference:
+            vals['transfer_reference'] = self.transfer_reference
+        return vals
+
+    def _create_payment_vals_from_batch(self, batch_result):
+        vals = super()._create_payment_vals_from_batch(batch_result)
+        if self.transfer_reference:
+            vals['transfer_reference'] = self.transfer_reference
+        return vals
