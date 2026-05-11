@@ -147,8 +147,8 @@
                                         <t t-if="tp.memo">
                                             <span t-field="tp.memo"/>
                                         </t>
-                                        <t t-elif="tp.ref">
-                                            <span t-field="tp.ref"/>
+                                        <t t-elif="tp.payment_reference">
+                                            <span t-field="tp.payment_reference"/>
                                         </t>
                                         <t t-else="">
                                             <em class="text-muted">— sin nro de comprobante —</em>
