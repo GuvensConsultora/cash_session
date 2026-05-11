@@ -133,7 +133,7 @@
                             <tr>
                                 <th>Cliente</th>
                                 <th>Diario</th>
-                                <th>N° comprobante</th>
+                                <th>N° comprobante de transferencia</th>
                                 <th class="text-center">Fecha</th>
                                 <th class="text-end">Importe</th>
                             </tr>
@@ -143,7 +143,17 @@
                                 <tr>
                                     <td><span t-field="tp.partner_id.name"/></td>
                                     <td><span t-field="tp.journal_id.name"/></td>
-                                    <td><span t-out="tp.memo or tp.ref or tp.name"/></td>
+                                    <td>
+                                        <t t-if="tp.memo">
+                                            <span t-field="tp.memo"/>
+                                        </t>
+                                        <t t-elif="tp.ref">
+                                            <span t-field="tp.ref"/>
+                                        </t>
+                                        <t t-else="">
+                                            <em class="text-muted">— sin nro de comprobante —</em>
+                                        </t>
+                                    </td>
                                     <td class="text-center"><span t-field="tp.date"/></td>
                                     <td class="text-end">
                                         <span t-field="tp.amount" t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
@@ -163,9 +173,10 @@
                         </tfoot>
                     </table>
                     <p class="text-muted" style="font-size: 0.9em;">
-                        Las transferencias no se rinden físicamente — el cajero
-                        verifica el comprobante y la plata cae directo en cuenta bancaria.
-                        Se listan acá para trazabilidad.
+                        El N° de comprobante de transferencia (CoelSA o similar) lo
+                        carga el cajero al registrar el pago, en el campo "Memo" del
+                        recibo. No es el número de factura. Las transferencias no se
+                        rinden físicamente — la plata cae directo en cuenta bancaria.
                     </p>
                 </t>
 
@@ -224,6 +235,76 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- ============================================ -->
+                <!-- ANEXO — Facturas canceladas en la sesión     -->
+                <!-- ============================================ -->
+                <t t-if="o.paid_invoice_ids">
+                    <p style="page-break-before: always;"/>
+                    <h3 class="mt-4">Anexo — Facturas canceladas en esta sesión</h3>
+                    <p class="text-muted" style="font-size: 0.9em;">
+                        Detalle informativo de las facturas que fueron canceladas
+                        (parcial o totalmente) con los pagos registrados durante
+                        esta sesión de caja. Este anexo no se firma — es solo
+                        para trazabilidad operativa del cajero.
+                    </p>
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>N° factura</th>
+                                <th>Cliente</th>
+                                <th class="text-center">Fecha factura</th>
+                                <th class="text-end">Total factura</th>
+                                <th class="text-end">Saldo pendiente</th>
+                                <th class="text-center">Estado</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <t t-foreach="o.paid_invoice_ids" t-as="inv">
+                                <tr>
+                                    <td><span t-field="inv.name"/></td>
+                                    <td><span t-field="inv.partner_id.name"/></td>
+                                    <td class="text-center"><span t-field="inv.invoice_date"/></td>
+                                    <td class="text-end">
+                                        <span t-field="inv.amount_total" t-options='{"widget": "monetary", "display_currency": inv.currency_id}'/>
+                                    </td>
+                                    <td class="text-end">
+                                        <span t-field="inv.amount_residual" t-options='{"widget": "monetary", "display_currency": inv.currency_id}'/>
+                                    </td>
+                                    <td class="text-center">
+                                        <t t-if="inv.payment_state == 'paid'">
+                                            <span style="color: #2e8b57;"><strong>Pagada</strong></span>
+                                        </t>
+                                        <t t-elif="inv.payment_state == 'partial'">
+                                            <span style="color: #cc7700;">Parcial</span>
+                                        </t>
+                                        <t t-else="">
+                                            <span t-field="inv.payment_state"/>
+                                        </t>
+                                    </td>
+                                </tr>
+                            </t>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="3" class="text-end"><strong>Total facturado impactado:</strong></td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-out="sum(o.paid_invoice_ids.mapped('amount_total'))"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-out="sum(o.paid_invoice_ids.mapped('amount_residual'))"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                                <td/>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </t>
             </div>
         </t>
     </template>

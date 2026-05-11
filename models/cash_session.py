@@ -107,6 +107,10 @@ class CashSession(models.Model):
         string='Total transferencias', compute='_compute_session_payments',
         currency_field='currency_id',
     )
+    paid_invoice_ids = fields.Many2many(
+        'account.move', string='Facturas canceladas en la sesión',
+        compute='_compute_session_payments',
+    )
 
     @api.depends('date_open', 'date_close', 'cash_register_id.journal_ids', 'state')
     def _compute_session_payments(self):
@@ -124,6 +128,7 @@ class CashSession(models.Model):
                 s.handover_check_total = 0.0
                 s.handover_card_total = 0.0
                 s.handover_transfer_total = 0.0
+                s.paid_invoice_ids = self.env['account.move']
                 continue
             domain = [
                 ('journal_id', 'in', s.cash_register_id.journal_ids.ids),
@@ -152,6 +157,8 @@ class CashSession(models.Model):
             s.handover_check_total = sum(s.check_payment_ids.mapped('amount'))
             s.handover_card_total = sum(s.card_payment_ids.mapped('amount'))
             s.handover_transfer_total = sum(s.transfer_payment_ids.mapped('amount'))
+            # Facturas canceladas (parcial o totalmente) por los pagos de la sesión
+            s.paid_invoice_ids = payments.mapped('reconciled_invoice_ids').sorted('invoice_date')
 
     @api.depends('closing_line_ids.difference')
     def _compute_difference(self):
