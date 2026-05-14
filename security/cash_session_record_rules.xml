@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <!--
+        Visibilidad por responsable.
+
+        - El grupo "Cash Session — Usuario" solo ve cajas (cash.register) y
+          sesiones (cash.session) donde el usuario está listado en
+          responsible_user_ids de la caja. Esto separa, dentro de la misma
+          compañía, a Marcelo (FCAM) del responsable de Casa de Repuestos.
+        - El grupo "Cash Session — Manager" ve todo (implies user, así que
+          la OR de reglas le devuelve el universo completo).
+        - El filtro por compañía lo aplica el ORM nativo vía company_id de
+          los modelos: si el usuario no tiene una compañía en allowed_companies,
+          no ve sus registros y no aparece en el switcher.
+    -->
+
+    <record id="cash_register_rule_own" model="ir.rule">
+        <field name="name">Cash Register: solo cajas asignadas al usuario</field>
+        <field name="model_id" ref="model_cash_register"/>
+        <field name="domain_force">[('responsible_user_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(4, ref('cash_session.group_cash_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="False"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="cash_register_rule_manager" model="ir.rule">
+        <field name="name">Cash Register: manager ve todo</field>
+        <field name="model_id" ref="model_cash_register"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('cash_session.group_cash_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="cash_session_rule_own" model="ir.rule">
+        <field name="name">Cash Session: solo sesiones de cajas propias</field>
+        <field name="model_id" ref="model_cash_session"/>
+        <field name="domain_force">[('cash_register_id.responsible_user_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(4, ref('cash_session.group_cash_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="cash_session_rule_manager" model="ir.rule">
+        <field name="name">Cash Session: manager ve todo</field>
+        <field name="model_id" ref="model_cash_session"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('cash_session.group_cash_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+    <record id="cash_session_line_rule_own" model="ir.rule">
+        <field name="name">Cash Session Line: solo líneas de sesiones propias</field>
+        <field name="model_id" ref="model_cash_session_line"/>
+        <field name="domain_force">[('session_id.cash_register_id.responsible_user_ids', 'in', [user.id])]</field>
+        <field name="groups" eval="[(4, ref('cash_session.group_cash_user'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="False"/>
+    </record>
+
+    <record id="cash_session_line_rule_manager" model="ir.rule">
+        <field name="name">Cash Session Line: manager ve todo</field>
+        <field name="model_id" ref="model_cash_session_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(4, ref('cash_session.group_cash_manager'))]"/>
+        <field name="perm_read" eval="True"/>
+        <field name="perm_write" eval="True"/>
+        <field name="perm_create" eval="True"/>
+        <field name="perm_unlink" eval="True"/>
+    </record>
+
+</odoo>

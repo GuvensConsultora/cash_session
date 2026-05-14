@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <template id="report_cash_session_document">
+        <t t-call="web.external_layout">
+            <t t-set="o" t-value="doc.with_context(lang=doc.responsible_id.lang or doc.company_id.partner_id.lang or 'es_AR')"/>
+            <div class="page">
+
+                <!-- Encabezado -->
+                <div class="row mt-2 mb-3">
+                    <div class="col-8">
+                        <h2 class="mb-0">Cierre de caja</h2>
+                        <h4 class="text-muted mt-0">
+                            <span t-field="o.name"/>
+                        </h4>
+                    </div>
+                    <div class="col-4 text-end">
+                        <span class="badge bg-secondary" style="font-size: 12px;">
+                            <t t-if="o.state == 'draft'">Borrador</t>
+                            <t t-elif="o.state == 'open'">Abierta</t>
+                            <t t-elif="o.state == 'closing'">En cierre</t>
+                            <t t-elif="o.state == 'closed'">Cerrada</t>
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Datos generales -->
+                <table class="table table-sm table-borderless mb-3">
+                    <tr>
+                        <td style="width: 18%;"><strong>Caja</strong></td>
+                        <td style="width: 32%;"><span t-field="o.cash_register_id"/></td>
+                        <td style="width: 18%;"><strong>Compañía</strong></td>
+                        <td style="width: 32%;"><span t-field="o.company_id"/></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Responsable</strong></td>
+                        <td><span t-field="o.responsible_id"/></td>
+                        <td><strong>Apertura</strong></td>
+                        <td><span t-field="o.date_open" t-options='{"widget": "datetime"}'/></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Estado</strong></td>
+                        <td>
+                            <t t-if="o.state == 'draft'">Borrador</t>
+                            <t t-elif="o.state == 'open'">Abierta</t>
+                            <t t-elif="o.state == 'closing'">En cierre</t>
+                            <t t-elif="o.state == 'closed'">Cerrada</t>
+                        </td>
+                        <td><strong>Cierre</strong></td>
+                        <td>
+                            <span t-if="o.date_close" t-field="o.date_close" t-options='{"widget": "datetime"}'/>
+                            <span t-else="">—</span>
+                        </td>
+                    </tr>
+                </table>
+
+                <!-- Arqueo de apertura -->
+                <h4 class="mt-3">Arqueo de apertura</h4>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Diario</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Físico inicial</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="o.opening_line_ids" t-as="ol">
+                            <td><span t-field="ol.journal_id"/></td>
+                            <td>
+                                <t t-if="ol.journal_kind == 'cash'">Efectivo</t>
+                                <t t-elif="ol.journal_kind == 'third_party_check'">Cheques de terceros</t>
+                                <t t-elif="ol.journal_kind == 'own_check'">Cheques propios</t>
+                                <t t-elif="ol.journal_kind == 'card'">Tarjeta</t>
+                                <t t-elif="ol.journal_kind == 'transfer'">Transferencia</t>
+                                <t t-else=""><span t-field="ol.journal_kind"/></t>
+                            </td>
+                            <td class="text-end">
+                                <span t-field="ol.physical_amount"
+                                      t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr t-if="not o.opening_line_ids">
+                            <td colspan="3" class="text-center text-muted">
+                                Sin líneas de apertura cargadas.
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <!-- Arqueo de cierre -->
+                <h4 class="mt-3">Arqueo de cierre</h4>
+                <table class="table table-sm table-bordered">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Diario</th>
+                            <th>Tipo</th>
+                            <th class="text-end">Teórico</th>
+                            <th class="text-end">Físico</th>
+                            <th class="text-end">Diferencia</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="o.closing_line_ids" t-as="cl">
+                            <td><span t-field="cl.journal_id"/></td>
+                            <td>
+                                <t t-if="cl.journal_kind == 'cash'">Efectivo</t>
+                                <t t-elif="cl.journal_kind == 'third_party_check'">Cheques de terceros</t>
+                                <t t-elif="cl.journal_kind == 'own_check'">Cheques propios</t>
+                                <t t-elif="cl.journal_kind == 'card'">Tarjeta</t>
+                                <t t-elif="cl.journal_kind == 'transfer'">Transferencia</t>
+                                <t t-else=""><span t-field="cl.journal_kind"/></t>
+                            </td>
+                            <td class="text-end">
+                                <span t-field="cl.theoretical_amount"
+                                      t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                            <td class="text-end">
+                                <span t-field="cl.physical_amount"
+                                      t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                            <td class="text-end" t-att-style="cl.difference and 'color:#b00; font-weight:600;' or ''">
+                                <span t-field="cl.difference"
+                                      t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                        <tr t-if="not o.closing_line_ids">
+                            <td colspan="5" class="text-center text-muted">
+                                Sin líneas de cierre cargadas.
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot t-if="o.closing_line_ids">
+                        <tr>
+                            <td colspan="4" class="text-end"><strong>Diferencia total</strong></td>
+                            <td class="text-end" t-att-style="o.difference_total and 'color:#b00; font-weight:700;' or 'font-weight:700;'">
+                                <span t-field="o.difference_total"
+                                      t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                            </td>
+                        </tr>
+                    </tfoot>
+                </table>
+
+                <!-- Cheques recibidos -->
+                <div t-if="o.check_ids" class="mt-3">
+                    <h4>Cheques recibidos</h4>
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>N° cheque</th>
+                                <th>Librador</th>
+                                <th>Banco</th>
+                                <th>Fecha de pago</th>
+                                <th class="text-end">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="o.check_ids.sorted(key=lambda c: (c.payment_date or c.create_date, c.id))" t-as="c">
+                                <td><span t-field="c.name"/></td>
+                                <td><span t-field="c.partner_id"/></td>
+                                <td>
+                                    <span t-if="c.bank_id" t-field="c.bank_id"/>
+                                    <span t-else="">—</span>
+                                </td>
+                                <td>
+                                    <span t-if="c.payment_date" t-field="c.payment_date"/>
+                                    <span t-else="">—</span>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="c.amount"
+                                          t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="4" class="text-end"><strong>Total cheques (<span t-esc="o.check_count"/>)</strong></td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-field="o.check_total"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Cupones tarjeta -->
+                <div t-if="o.card_payment_ids" class="mt-3">
+                    <h4>Cupones tarjeta</h4>
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Pago</th>
+                                <th>Fecha</th>
+                                <th>Cliente</th>
+                                <th>Tarjeta</th>
+                                <th>Memo</th>
+                                <th class="text-end">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="o.card_payment_ids.sorted(key=lambda p: (p.date, p.id))" t-as="p">
+                                <td><span t-field="p.name"/></td>
+                                <td><span t-field="p.date"/></td>
+                                <td><span t-field="p.partner_id"/></td>
+                                <td><span t-field="p.journal_id"/></td>
+                                <td>
+                                    <span t-if="p.memo" t-field="p.memo"/>
+                                    <span t-else="">—</span>
+                                </td>
+                                <td class="text-end">
+                                    <span t-field="p.amount"
+                                          t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-end"><strong>Total cupones (<span t-esc="o.card_count"/>)</strong></td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-field="o.card_total"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Retenciones sufridas -->
+                <div t-if="o.withholding_line_ids" class="mt-3">
+                    <h4>Retenciones sufridas</h4>
+                    <table class="table table-sm table-bordered">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Fecha</th>
+                                <th>Recibo</th>
+                                <th>Cliente</th>
+                                <th>Retención</th>
+                                <th class="text-end">Base</th>
+                                <th class="text-end">Importe</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr t-foreach="o.withholding_line_ids.sorted(key=lambda l: (l.date, l.id))" t-as="wl">
+                                <td><span t-field="wl.date"/></td>
+                                <td><span t-field="wl.move_id"/></td>
+                                <td><span t-field="wl.partner_id"/></td>
+                                <td><span t-field="wl.tax_line_id"/></td>
+                                <td class="text-end">
+                                    <span t-field="wl.tax_base_amount"
+                                          t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                                <td class="text-end">
+                                    <span t-esc="abs(wl.balance)"
+                                          t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                </td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr>
+                                <td colspan="5" class="text-end"><strong>Total retenciones (<span t-esc="o.withholding_count"/>)</strong></td>
+                                <td class="text-end">
+                                    <strong>
+                                        <span t-field="o.withholding_total"
+                                              t-options='{"widget": "monetary", "display_currency": o.currency_id}'/>
+                                    </strong>
+                                </td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                <!-- Observaciones -->
+                <div t-if="o.closing_observations" class="mt-3">
+                    <h4>Observaciones del cierre</h4>
+                    <p style="white-space: pre-wrap;"><span t-field="o.closing_observations"/></p>
+                </div>
+
+                <!-- Transferencia a caja central -->
+                <div t-if="o.transfer_move_id" class="mt-3">
+                    <h4>Transferencia a caja central</h4>
+                    <table class="table table-sm table-borderless">
+                        <tr>
+                            <td style="width: 18%;"><strong>Asiento</strong></td>
+                            <td style="width: 32%;"><span t-field="o.transfer_move_id.name"/></td>
+                            <td style="width: 18%;"><strong>Fecha</strong></td>
+                            <td style="width: 32%;"><span t-field="o.transfer_move_id.date"/></td>
+                        </tr>
+                        <tr>
+                            <td><strong>Diario</strong></td>
+                            <td><span t-field="o.transfer_move_id.journal_id"/></td>
+                            <td><strong>Total</strong></td>
+                            <td>
+                                <span t-field="o.transfer_move_id.amount_total"
+                                      t-options='{"widget": "monetary", "display_currency": o.transfer_move_id.currency_id}'/>
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+
+                <!-- Firmas -->
+                <div class="row mt-5 pt-4">
+                    <div class="col-6 text-center">
+                        <div style="border-top: 1px solid #000; margin: 0 20px; padding-top: 4px;">
+                            Responsable de la caja
+                        </div>
+                        <div class="text-muted" style="font-size: 11px;">
+                            <span t-field="o.responsible_id"/>
+                        </div>
+                    </div>
+                    <div class="col-6 text-center">
+                        <div style="border-top: 1px solid #000; margin: 0 20px; padding-top: 4px;">
+                            Supervisión
+                        </div>
+                        <div class="text-muted" style="font-size: 11px;">
+                            Aclaración y firma
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </t>
+    </template>
+
+    <template id="report_cash_session">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="doc">
+                <t t-call="cash_session.report_cash_session_document"/>
+            </t>
+        </t>
+    </template>
+
+</odoo>

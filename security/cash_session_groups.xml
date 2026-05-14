@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="group_cash_user" model="res.groups">
+        <field name="name">Cash Session — Usuario</field>
+        <field name="comment">Puede operar sesiones de caja en las cajas donde está autorizado.</field>
+    </record>
+
+    <record id="group_cash_manager" model="res.groups">
+        <field name="name">Cash Session — Manager</field>
+        <field name="implied_ids" eval="[(4, ref('group_cash_user'))]"/>
+        <field name="comment">Configura cajas, cuentas y caja central de cierre.</field>
+    </record>
+</odoo>

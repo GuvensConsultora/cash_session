@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_cash_session_root"
+              name="Cajas"
+              parent="sale.sale_menu_root"
+              sequence="20"/>
+
+    <menuitem id="menu_cash_session_sessions"
+              name="Sesiones de caja"
+              parent="menu_cash_session_root"
+              action="action_cash_session"
+              sequence="10"/>
+
+    <menuitem id="menu_cash_session_config_root"
+              name="Configuración"
+              parent="menu_cash_session_root"
+              sequence="90"/>
+
+    <menuitem id="menu_cash_register"
+              name="Cajas físicas"
+              parent="menu_cash_session_config_root"
+              action="action_cash_register"
+              sequence="10"/>
+</odoo>
