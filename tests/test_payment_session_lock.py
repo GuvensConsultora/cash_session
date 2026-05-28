@@ -27,11 +27,16 @@ class TestPaymentSessionLock(TransactionCase):
 
         cls.cashier = cls.env['res.users'].create({
             'name': 'Cajero Test', 'login': 'cajero_test',
-            'groups_id': [(6, 0, [base_user.id, acct_user.id, cashier_grp.id])],
+            'group_ids': [(6, 0, [base_user.id, acct_user.id, cashier_grp.id])],
         })
         cls.treasury = cls.env['res.users'].create({
             'name': 'Tesoreria Test', 'login': 'tesoreria_test',
-            'groups_id': [(6, 0, [base_user.id, acct_user.id])],
+            'group_ids': [(6, 0, [base_user.id, acct_user.id])],
+        })
+        mgr_grp = cls.env.ref('cash_session.group_cash_manager')
+        cls.manager = cls.env['res.users'].create({
+            'name': 'Manager Test', 'login': 'manager_test',
+            'group_ids': [(6, 0, [base_user.id, acct_user.id, mgr_grp.id])],
         })
 
         cls.register = cls.env['cash.register'].create({
@@ -83,6 +88,16 @@ class TestPaymentSessionLock(TransactionCase):
     def test_non_cash_journal_unaffected(self):
         # journal de banco/tesorería: no pertenece a ninguna caja -> sin candado
         pay = self._make_payment(self.bank_journal, self.cashier)
+        self.assertTrue(pay.id)
+
+    def test_manager_exempt_even_without_session(self):
+        # los managers estan siempre exentos (rol de supervision/correccion)
+        pay = self._make_payment(self.cash_journal, self.manager)
+        self.assertTrue(pay.id)
+
+    def test_manager_exempt_even_with_switch_on(self):
+        self.company.cash_enforce_payment_session_all = True
+        pay = self._make_payment(self.cash_journal, self.manager)
         self.assertTrue(pay.id)
 
     def test_outbound_payment_also_locked(self):

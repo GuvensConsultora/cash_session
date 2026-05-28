@@ -89,7 +89,10 @@ class AccountPayment(models.Model):
           tesorería/banco que no son de ninguna caja quedan exentos por diseño).
         - Por defecto aplica a los usuarios cajeros (grupo `group_cash_user`).
           Tesorería (fuera de ese grupo) queda exenta, salvo que la compañía
-          active `cash_enforce_payment_session_all` (entonces aplica a todos).
+          active `cash_enforce_payment_session_all` (entonces aplica a todos
+          menos managers).
+        - Los managers (`group_cash_manager`) están SIEMPRE exentos: son el rol
+          de supervisión/corrección y pueden operar sin abrir turno.
         - Responsabilidad personal: la sesión abierta debe tener al usuario
           actual como responsable. No alcanza con que la caja tenga cualquier
           sesión abierta.
@@ -103,8 +106,12 @@ class AccountPayment(models.Model):
             register = p._cash_register_for_journal()
             if not register:
                 continue
+            user = self.env.user
+            # Managers siempre exentos (rol de supervisión/corrección).
+            if user.has_group('cash_session.group_cash_manager'):
+                continue
             enforce_all = p.company_id.cash_enforce_payment_session_all
-            if not enforce_all and not self.env.user.has_group('cash_session.group_cash_user'):
+            if not enforce_all and not user.has_group('cash_session.group_cash_user'):
                 continue
             if not p._cash_open_session(register):
                 raise UserError(_(

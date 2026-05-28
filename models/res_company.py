@@ -45,9 +45,11 @@ class ResCompany(models.Model):
         string='Exigir caja abierta a todos los usuarios',
         default=False,
         help='Por defecto, el bloqueo de cobros/pagos sin sesión de caja abierta '
-             'aplica solo a los usuarios cajeros (grupo "Cash Session — Usuario"); '
-             'tesorería queda exenta. Si se activa, el bloqueo aplica a TODOS los '
-             'usuarios que operen un journal de caja, incluida tesorería.',
+             'aplica solo a los cajeros (grupo "Cash Session — Usuario"); '
+             'tesorería queda exenta. Si se activa, aplica a TODOS los usuarios '
+             'que operen un journal de caja. En ambos casos los managers '
+             '("Cash Session — Manager") quedan SIEMPRE exentos (rol de '
+             'supervisión/corrección).',
     )
 
 

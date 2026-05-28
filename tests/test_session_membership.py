@@ -20,7 +20,7 @@ class TestSessionMembership(TransactionCase):
         })
         cls.cashier = cls.env['res.users'].create({
             'name': 'Cajero Test', 'login': 'cajero_memb',
-            'groups_id': [(6, 0, [
+            'group_ids': [(6, 0, [
                 cls.env.ref('base.group_user').id,
                 cls.env.ref('account.group_account_user').id,
                 cls.env.ref('cash_session.group_cash_user').id,
@@ -28,7 +28,7 @@ class TestSessionMembership(TransactionCase):
         })
         cls.treasury = cls.env['res.users'].create({
             'name': 'Tesoreria Test', 'login': 'tesoreria_memb',
-            'groups_id': [(6, 0, [
+            'group_ids': [(6, 0, [
                 cls.env.ref('base.group_user').id,
                 cls.env.ref('account.group_account_user').id,
             ])],
