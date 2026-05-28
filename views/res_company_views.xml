@@ -28,6 +28,10 @@
                             <field name="cash_intercompany_payable_id"
                                    options="{'no_create': True}"/>
                         </div>
+                        <div class="row mt16">
+                            <field name="cash_enforce_payment_session_all"/>
+                            <label for="cash_enforce_payment_session_all" class="o_light_label"/>
+                        </div>
                     </div>
                 </setting>
             </xpath>
@@ -44,6 +48,7 @@
                 <field name="cash_central_journal_id" invisible="1"/>
                 <field name="cash_intercompany_receivable_id" invisible="1"/>
                 <field name="cash_intercompany_payable_id" invisible="1"/>
+                <field name="cash_enforce_payment_session_all" invisible="1"/>
             </xpath>
         </field>
     </record>

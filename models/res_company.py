@@ -41,6 +41,14 @@ class ResCompany(models.Model):
              'de esta compañía recibe una transferencia de la otra. Refleja la '
              'deuda con la sociedad vinculada.',
     )
+    cash_enforce_payment_session_all = fields.Boolean(
+        string='Exigir caja abierta a todos los usuarios',
+        default=False,
+        help='Por defecto, el bloqueo de cobros/pagos sin sesión de caja abierta '
+             'aplica solo a los usuarios cajeros (grupo "Cash Session — Usuario"); '
+             'tesorería queda exenta. Si se activa, el bloqueo aplica a TODOS los '
+             'usuarios que operen un journal de caja, incluida tesorería.',
+    )
 
 
 class ResConfigSettings(models.TransientModel):
@@ -60,5 +68,9 @@ class ResConfigSettings(models.TransientModel):
     )
     cash_intercompany_payable_id = fields.Many2one(
         related='company_id.cash_intercompany_payable_id',
+        readonly=False,
+    )
+    cash_enforce_payment_session_all = fields.Boolean(
+        related='company_id.cash_enforce_payment_session_all',
         readonly=False,
     )

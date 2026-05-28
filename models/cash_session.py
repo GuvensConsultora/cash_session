@@ -60,6 +60,15 @@ class CashSession(models.Model):
         readonly=True, copy=False,
     )
 
+    membership_by_link = fields.Boolean(
+        string='Pertenencia por vínculo', default=False, readonly=True, copy=False,
+        help='Si está activo, los cobros/pagos de esta sesión se determinan por '
+             'el vínculo explícito `account.payment.cash_session_id` (estampado '
+             'al crear el payment), no por la fecha contable. Permite varios '
+             'turnos en el mismo día sin contaminar el arqueo. Las sesiones '
+             'nuevas se crean con este modo; las históricas siguen por fecha.',
+    )
+
     currency_id = fields.Many2one(
         related='company_id.currency_id', readonly=True,
     )
@@ -100,29 +109,34 @@ class CashSession(models.Model):
             s.difference_total = sum(s.closing_line_ids.mapped('difference'))
 
     def _session_payment_domain(self):
-        """Domain base para localizar payments del turno: journal en la caja,
-        fecha contable entre apertura y cierre (o ahora si todavía no cerró),
-        no draft, inbound (cobranzas). Multi-compañía respetada.
+        """Domain base para localizar los cobros (inbound) del turno.
 
-        Filtra por `date` (fecha contable), no `create_date`. Recibos cargados
-        retroactivamente (típico: cobros migrados del ERP anterior con date
-        retroactiva) NO deben sumarse a la caja física de la sesión actual:
-        físicamente entraron hace tiempo, no hoy. Mismo criterio que aplica a
-        theoretical_amount en cash.session.line.
+        Dos modos:
+        - `membership_by_link` (sesiones nuevas): pertenencia por el vínculo
+          explícito `cash_session_id`, estampado al crear el payment. Permite
+          varios turnos el mismo día sin contaminar el arqueo.
+        - Legacy (sesiones históricas): pertenencia por fecha contable (día),
+          entre apertura y cierre (o ahora si no cerró). Se conserva tal cual
+          para no alterar el arqueo de las sesiones ya cerradas. Filtra por
+          `date`, no `create_date`: los cobros migrados con fecha retroactiva
+          NO deben sumarse a la caja física del turno.
         """
         self.ensure_one()
-        if not self.cash_register_id or not self.date_open:
+        if not self.cash_register_id:
             return None
-        date_from = fields.Date.to_date(self.date_open)
-        date_to = fields.Date.to_date(self.date_close or fields.Datetime.now())
-        return [
+        base = [
             ('journal_id', 'in', self.cash_register_id.journal_ids.ids),
-            ('date', '>=', date_from),
-            ('date', '<=', date_to),
             ('state', '!=', 'draft'),
             ('company_id', '=', self.company_id.id),
             ('payment_type', '=', 'inbound'),
         ]
+        if self.membership_by_link:
+            return base + [('cash_session_id', '=', self.id)]
+        if not self.date_open:
+            return None
+        date_from = fields.Date.to_date(self.date_open)
+        date_to = fields.Date.to_date(self.date_close or fields.Datetime.now())
+        return base + [('date', '>=', date_from), ('date', '<=', date_to)]
 
     @api.depends('cash_register_id', 'cash_register_id.journal_ids',
                  'date_open', 'date_close', 'state')
@@ -197,6 +211,9 @@ class CashSession(models.Model):
     def create(self, vals_list):
         Sequence = self.env['ir.sequence'].sudo()
         for vals in vals_list:
+            # Sesiones nuevas: pertenencia por vínculo. Las históricas quedaron
+            # en False (default del campo) al actualizar el módulo.
+            vals.setdefault('membership_by_link', True)
             if vals.get('name', _('Nueva')) != _('Nueva'):
                 continue
             register = self.env['cash.register'].browse(vals.get('cash_register_id'))

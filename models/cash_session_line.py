@@ -44,9 +44,11 @@ class CashSessionLine(models.Model):
     )
 
     @api.depends('journal_id', 'session_id', 'session_id.date_open',
-                 'session_id.date_close', 'session_id.state', 'kind')
+                 'session_id.date_close', 'session_id.state', 'kind',
+                 'session_id.membership_by_link')
     def _compute_theoretical(self):
         AML = self.env['account.move.line']
+        Payment = self.env['account.payment']
         for l in self:
             if l.kind == 'open':
                 l.theoretical_amount = 0.0
@@ -64,10 +66,31 @@ class CashSessionLine(models.Model):
             if not accs:
                 l.theoretical_amount = 0.0
                 continue
-            # Usamos la fecha contable (date) en vez de create_date. Recibos
-            # migrados o backdated (date retroactiva, create_date dentro de la
-            # sesión actual) NO corresponden a la caja física de hoy: el cheque
-            # entró meses atrás, no en este turno.
+            if session.membership_by_link:
+                # Pertenencia por vínculo: el teórico suma los movimientos sobre
+                # las cuentas de la caja de los payments estampados a esta sesión
+                # (turnos intra-día exactos). La transferencia de cierre no es un
+                # payment, así que no entra: el teórico = cobros/pagos del turno,
+                # estable aunque la sesión se recompute después del cierre.
+                payments = Payment.sudo().search([
+                    ('cash_session_id', '=', session.id),
+                    ('journal_id', '=', journal.id),
+                    ('state', '!=', 'draft'),
+                ])
+                moves = payments.move_id
+                if not moves:
+                    l.theoretical_amount = 0.0
+                    continue
+                domain = [
+                    ('move_id', 'in', moves.ids),
+                    ('account_id', 'in', accs.ids),
+                    ('parent_state', '=', 'posted'),
+                ]
+                l.theoretical_amount = sum(AML.sudo().search(domain).mapped('balance'))
+                continue
+            # Legacy (sesiones históricas): por fecha contable (date), no
+            # create_date. Recibos migrados/backdated (date retroactiva, creados
+            # dentro de la sesión actual) NO corresponden a la caja física de hoy.
             date_from = fields.Date.to_date(session.date_open)
             domain = [
                 ('journal_id', '=', journal.id),
