@@ -324,7 +324,8 @@ class CashSession(models.Model):
         - Si hay diferencia y no hay observaciones, exige justificación.
         - Setea balance_end_real en cada statement = physical_amount y los postea
           (Odoo nativo imputa la diferencia a la cuenta de diferencias de la company).
-        - Genera el asiento de transferencia a caja central por efectivo y cheques.
+        - Genera el asiento de transferencia a caja central SOLO por el efectivo
+          (cheques de terceros y tarjetas se informan en el cierre, no se transfieren).
         - State pasa a 'closed'.
         """
         self.ensure_one()
@@ -361,7 +362,7 @@ class CashSession(models.Model):
                 except Exception:
                     pass
 
-        # 2. Transferir a caja central efectivo + cheques de terceros
+        # 2. Transferir a caja central SOLO el efectivo
         self._transfer_to_central()
 
         self.state = 'closed'
@@ -384,11 +385,13 @@ class CashSession(models.Model):
         if not central:
             return
 
-        # Recolectar líneas con monto > 0 cuyo journal sea cash o cheque
+        # Solo se transfiere EFECTIVO a la caja central. Cheques de terceros y
+        # tarjetas se recuentan e informan en el cierre, pero quedan en su
+        # journal (no se transfieren).
         breakdown = []  # list of (journal, amount)
         for cl in self.closing_line_ids:
             j = cl.journal_id
-            if j.cash_session_kind not in ('cash', 'third_party_check'):
+            if j.cash_session_kind != 'cash':
                 continue
             amount = cl.physical_amount
             if not amount or not j.default_account_id:
@@ -427,14 +430,14 @@ class CashSession(models.Model):
                 'account_id': dest_acc.id, 'name': label,
                 'debit': amount, 'credit': 0,
             }))
-        move = Move.create({
+        move = Move.with_company(company).create({
             'journal_id': central.id,
             'date': fields.Date.context_today(self),
             'ref': _('Cierre sesión %s') % self.name,
             'company_id': company.id,
             'line_ids': move_lines,
         })
-        move.action_post()
+        move.with_company(company).action_post()
         self.transfer_move_id = move.id
 
     def _transfer_to_central_inter(self, central, company_destino, breakdown):
@@ -517,7 +520,7 @@ class CashSession(models.Model):
             'company_id': company_origen.id,
             'line_ids': move_lines_origen,
         })
-        move_origen.action_post()
+        move_origen.with_company(company_origen).action_post()
 
         # Asiento espejo en compañía destino
         move_lines_destino = [
@@ -537,7 +540,7 @@ class CashSession(models.Model):
             'company_id': company_destino.id,
             'line_ids': move_lines_destino,
         })
-        move_destino.action_post()
+        move_destino.with_company(company_destino).action_post()
 
         self.transfer_move_id = move_origen.id
 
