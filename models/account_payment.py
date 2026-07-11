@@ -112,7 +112,7 @@ class AccountPayment(models.Model):
         huérfanos y distorsionaron el arqueo de la sesión anterior ya cerrada.
         """
         for p in self:
-            if p.state == 'canceled' or not p.journal_id:
+            if p.state in ('canceled', 'rejected') or not p.journal_id:
                 continue
             register = p._cash_register_for_journal()
             if not register:
