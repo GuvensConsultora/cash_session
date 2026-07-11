@@ -554,3 +554,13 @@ class CashSession(models.Model):
             'view_mode': 'form',
             'res_id': self.transfer_move_id.id,
         }
+
+    def action_view_checks(self):
+        self.ensure_one()
+        return {
+            'type': 'ir.actions.act_window',
+            'name': _('Cheques de la sesión'),
+            'res_model': 'l10n_latam.check',
+            'view_mode': 'list,form',
+            'domain': [('id', 'in', self.check_ids.ids)],
+        }
