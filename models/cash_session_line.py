@@ -75,7 +75,12 @@ class CashSessionLine(models.Model):
                 payments = Payment.sudo().search([
                     ('cash_session_id', '=', session.id),
                     ('journal_id', '=', journal.id),
-                    ('state', '!=', 'draft'),
+                    # Solo pagos que efectivamente mueven plata en la caja:
+                    # 'canceled'/'rejected' siguen con su asiento posteado (la
+                    # anulación es por reversión, no por borrado del move) y NO
+                    # corresponden al efectivo del turno. Filtrarlos por estado
+                    # del payment, no por el move. 'draft' tampoco cuenta.
+                    ('state', 'in', ['in_process', 'paid']),
                 ])
                 moves = payments.move_id
                 if not moves:

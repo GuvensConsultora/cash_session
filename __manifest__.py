@@ -1,6 +1,6 @@
 {
     'name': 'Cash Session — Cajas con turnos rotativos',
-    'version': '19.0.1.11.0',
+    'version': '19.0.1.12.0',
     'category': 'Accounting',
     'summary': 'Sesiones de caja con apertura/arqueo/cierre y transferencia '
                'automática a caja central. Multi-compañía, multi-caja, multi-turno.',

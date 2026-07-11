@@ -59,11 +59,22 @@ class AccountPayment(models.Model):
     @api.constrains('journal_id', 'payment_type', 'state')
     def _check_cash_session_outbound(self):
         """Si el journal pertenece a una caja con allow_payments_out=False,
-        no se puede crear/postear un payment outbound (pago a proveedor) desde acá."""
+        bloquea pagos a proveedores SOLO para cajeros (group_cash_user).
+
+        Contaduría y tesorería (usuarios sin grupo cash_session) quedan exentos:
+        necesitan pagar proveedores con cheques de terceros recibidos en caja
+        sin que eso implique ser cajeros. Los managers también exentos por diseño.
+        """
         for p in self:
             if p.payment_type != 'outbound':
                 continue
             if not p.journal_id:
+                continue
+            user = self.env.user
+            # Solo aplica a cajeros. Managers y usuarios fuera de cash_session exentos.
+            if not user.has_group('cash_session.group_cash_user'):
+                continue
+            if user.has_group('cash_session.group_cash_manager'):
                 continue
             register = self.env['cash.register'].search([
                 ('journal_ids', 'in', p.journal_id.id),
