@@ -56,6 +56,64 @@ class AccountPayment(models.Model):
                 p.cash_session_id = session.id
         return payments
 
+    def _cash_session_del_usuario(self, register, estados=('open', 'closing')):
+        """Sesión del cajero actual para `register`, abierta o en cierre.
+
+        Se acepta `closing` a propósito: mientras el cajero cuenta la caja el
+        turno sigue siendo suyo, y la plata que se confirma en ese momento es
+        de ese turno.
+        """
+        if not register:
+            return self.env['cash.session']
+        return self.env['cash.session'].sudo().search([
+            ('cash_register_id', '=', register.id),
+            ('state', 'in', list(estados)),
+            ('responsible_id', '=', self.env.user.id),
+        ], limit=1)
+
+    def _cash_resync_session(self):
+        """Reasigna la caja cuando el pago se CONFIRMA en un turno distinto de
+        aquel en que se creó.
+
+        `create()` estampa la sesión abierta del momento, y el arqueo arma por
+        ese vínculo. Pero un pago puede nacer en un turno y confirmarse en otro:
+        el recibo se arma un día, queda en borrador porque no se cobró, y se
+        confirma días después cuando entra la plata. Mientras está en borrador
+        no cuenta para ningún arqueo; al confirmarlo cuenta para el turno VIEJO,
+        que a esa altura suele estar cerrado. El efectivo queda colgado en una
+        caja que ya nadie cuenta y falta en la que el cajero tiene en la mano.
+
+        Caso 2026-08-27 (MADERAS SSAP, $2.584.000): el recibo se armó el 22, no
+        se cobró y quedó en borrador; el efectivo entró el 27. Al confirmarlo,
+        el pago se sumó a la caja del 22 —cerrada, y cerrada sin línea de
+        efectivo— y la del 27 no lo veía.
+
+        Sólo actúa si la sesión estampada YA NO está abierta ni en cierre. Si
+        quien confirma no es cajero y no tiene turno propio, no se toca nada:
+        es preferible dejar el vínculo viejo, visible, que inventar uno.
+        """
+        for p in self:
+            if p.state in ('draft', 'canceled', 'rejected'):
+                continue
+            register = p._cash_register_for_journal()
+            if not register:
+                continue
+            vieja = p.cash_session_id
+            if vieja and vieja.state in ('open', 'closing'):
+                continue
+            nueva = p._cash_session_del_usuario(register)
+            if not nueva or nueva == vieja:
+                continue
+            p.sudo().write({'cash_session_id': nueva.id})
+            p.message_post(body=_(
+                'Sesión de caja reasignada de %(vieja)s a %(nueva)s: el pago se '
+                'creó en un turno y se confirmó en otro. El arqueo arma por este '
+                'vínculo, así que sin el cambio el importe quedaba en la caja '
+                'vieja y faltaba en la del turno en que realmente se cobró.',
+                vieja=vieja.display_name if vieja else _('(ninguna)'),
+                nueva=nueva.display_name,
+            ))
+
     @api.constrains('journal_id', 'payment_type', 'state')
     def _check_cash_session_outbound(self):
         """Si el journal pertenece a una caja con allow_payments_out=False,
@@ -132,6 +190,23 @@ class AccountPayment(models.Model):
                     tipo=_('cobro') if p.payment_type == 'inbound' else _('pago'),
                     caja=register.display_name,
                 ))
+
+
+class AccountMove(models.Model):
+    _inherit = 'account.move'
+
+    def action_post(self):
+        """Al postear el asiento de un pago de caja, revisar su turno.
+
+        Es el único momento en que el pago pasa a contar para un arqueo, así
+        que es donde corresponde verificar que el turno estampado siga siendo
+        el correcto. Ver `account.payment._cash_resync_session`.
+        """
+        res = super().action_post()
+        pagos = self.mapped('origin_payment_id')
+        if pagos:
+            pagos._cash_resync_session()
+        return res
 
 
 class AccountBankStatement(models.Model):
