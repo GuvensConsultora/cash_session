@@ -17,17 +17,34 @@ class AccountPayment(models.Model):
     def _cash_register_for_journal(self):
         """Caja activa a la que pertenece el journal del payment (o vacío).
 
+        Un journal puede estar en varias cajas (las tarjetas y el banco son
+        los mismos para Facturación y Repuestos). En ese caso el cobro es de
+        la caja donde el usuario actual tiene su turno abierto o en cierre;
+        si no tiene turno en ninguna, la primera, como antes.
+
+        Caso 2026-10-17: las tarjetas estaban sólo en Facturación y el
+        cajero de Repuestos, con su turno abierto, no podía cobrar con débito.
+
         sudo: la existencia de la caja es un invariante de negocio; no debe
         depender de las record rules de visibilidad del usuario.
         """
         self.ensure_one()
         if not self.journal_id:
             return self.env['cash.register']
-        return self.env['cash.register'].sudo().search([
+        registers = self.env['cash.register'].sudo().search([
             ('journal_ids', 'in', self.journal_id.id),
             ('company_id', '=', self.company_id.id),
             ('active', '=', True),
-        ], limit=1)
+        ])
+        if len(registers) > 1:
+            del_turno = self.env['cash.session'].sudo().search([
+                ('cash_register_id', 'in', registers.ids),
+                ('state', 'in', ('open', 'closing')),
+                ('responsible_id', '=', self.env.user.id),
+            ], limit=1).cash_register_id
+            if del_turno:
+                return del_turno
+        return registers[:1]
 
     def _cash_open_session(self, register):
         """Sesión ABIERTA de `register` a nombre del usuario actual (o vacío)."""
@@ -134,11 +151,7 @@ class AccountPayment(models.Model):
                 continue
             if user.has_group('cash_session.group_cash_manager'):
                 continue
-            register = self.env['cash.register'].search([
-                ('journal_ids', 'in', p.journal_id.id),
-                ('company_id', '=', p.company_id.id),
-                ('active', '=', True),
-            ], limit=1)
+            register = p._cash_register_for_journal()
             if register and not register.allow_payments_out:
                 raise UserError(_(
                     'La caja "%(c)s" NO autoriza pagos a proveedores. '

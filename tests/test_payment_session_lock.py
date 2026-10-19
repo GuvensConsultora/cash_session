@@ -114,3 +114,24 @@ class TestPaymentSessionLock(TransactionCase):
                 'payment_method_line_id':
                     self.cash_journal.outbound_payment_method_line_ids[:1].id or False,
             })
+
+    def test_shared_journal_goes_to_cashier_register(self):
+        # el mismo journal en dos cajas: el cobro es de la caja del turno de
+        # quien cobra, no de la primera que lo tenga (caso Repuestos 17/10/26)
+        other = self.env['res.users'].create({
+            'name': 'Cajero Repuestos', 'login': 'cajero_rep_test',
+            'group_ids': [(6, 0, self.cashier.group_ids.ids)],
+        })
+        register2 = self.env['cash.register'].create({
+            'name': 'Caja Repuestos Test', 'code': 'CRT',
+            'company_id': self.company.id,
+            'journal_ids': [(6, 0, [self.cash_journal.id])],
+            'responsible_user_ids': [(6, 0, [other.id])],
+        })
+        session = self.env['cash.session'].create({
+            'cash_register_id': register2.id, 'responsible_id': other.id,
+        })
+        session.action_open()
+        pay = self._make_payment(self.cash_journal, other)
+        self.assertEqual(pay.cash_session_id, session)
+        self.assertEqual(pay.with_user(other)._cash_register_for_journal(), register2)
