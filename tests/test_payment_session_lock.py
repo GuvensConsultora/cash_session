@@ -135,3 +135,23 @@ class TestPaymentSessionLock(TransactionCase):
         pay = self._make_payment(self.cash_journal, other)
         self.assertEqual(pay.cash_session_id, session)
         self.assertEqual(pay.with_user(other)._cash_register_for_journal(), register2)
+
+    def test_transfer_goes_to_session_but_not_to_count(self):
+        # cobro por banco fuera de toda caja: queda en el turno del cajero y
+        # se informa en Transferencias, pero no en el arqueo del efectivo
+        session = self._open_session_for(self.cashier)
+        pay = self._make_payment(self.bank_journal, self.cashier)
+        pay.payment_reference = 'OP-123'
+        pay.action_post()
+        self.assertEqual(pay.cash_session_id, session)
+        session.invalidate_recordset()
+        self.assertIn(pay, session.transfer_payment_ids)
+        self.assertEqual(session.transfer_total, 1000.0)
+        session.action_start_closing()
+        self.assertFalse(session.closing_line_ids.filtered(
+            lambda l: l.journal_id == self.bank_journal))
+        self.assertFalse(sum(session.closing_line_ids.mapped('theoretical_amount')))
+
+    def test_transfer_without_session_not_linked(self):
+        pay = self._make_payment(self.bank_journal, self.cashier)
+        self.assertFalse(pay.cash_session_id)

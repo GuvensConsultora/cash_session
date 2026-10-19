@@ -68,10 +68,29 @@ class AccountPayment(models.Model):
         for p in payments:
             if p.cash_session_id:
                 continue
-            session = p._cash_open_session(p._cash_register_for_journal())
+            register = p._cash_register_for_journal()
+            session = p._cash_open_session(register)
+            if not session and not register:
+                session = p._cash_session_transferencia()
             if session:
                 p.cash_session_id = session.id
         return payments
+
+    def _cash_session_transferencia(self):
+        """Turno abierto del cajero para un cobro por banco fuera de toda caja.
+
+        Las transferencias no pasan por la caja y no entran en el arqueo, pero
+        el cierre las informa con su Nº de operación: el cajero que la registró
+        es quien puede explicar una que nunca llegue al banco.
+        """
+        self.ensure_one()
+        if self.payment_type != 'inbound' or self.journal_id.type != 'bank':
+            return self.env['cash.session']
+        return self.env['cash.session'].sudo().search([
+            ('responsible_id', '=', self.env.user.id),
+            ('state', '=', 'open'),
+            ('cash_register_id.company_id', '=', self.company_id.id),
+        ], limit=1)
 
     def _cash_session_del_usuario(self, register, estados=('open', 'closing')):
         """Sesión del cajero actual para `register`, abierta o en cierre.

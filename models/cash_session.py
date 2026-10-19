@@ -94,6 +94,17 @@ class CashSession(models.Model):
     card_total = fields.Monetary(
         compute='_compute_session_payments', currency_field='currency_id',
     )
+    # Transferencias: cobros del cajero en diarios de banco que no son de
+    # ninguna caja. Se informan con su Nº de operación para controlarlas
+    # contra el extracto; NO entran en el arqueo (no pasan por la caja).
+    transfer_payment_ids = fields.Many2many(
+        'account.payment', string='Transferencias',
+        compute='_compute_transfer_payments',
+    )
+    transfer_count = fields.Integer(compute='_compute_transfer_payments')
+    transfer_total = fields.Monetary(
+        compute='_compute_transfer_payments', currency_field='currency_id',
+    )
     withholding_line_ids = fields.Many2many(
         'account.move.line', string='Retenciones sufridas',
         compute='_compute_withholding_lines',
@@ -170,6 +181,25 @@ class CashSession(models.Model):
             s.card_count = len(cards)
             s.check_total = sum(checks.mapped('amount'))
             s.card_total = sum(cards.mapped('amount'))
+
+    @api.depends('cash_register_id', 'cash_register_id.journal_ids', 'state')
+    def _compute_transfer_payments(self):
+        Payment = self.env['account.payment']
+        for s in self:
+            if not s.id or not s.membership_by_link:
+                s.transfer_payment_ids = Payment
+                s.transfer_count = 0
+                s.transfer_total = 0.0
+                continue
+            pays = Payment.search([
+                ('cash_session_id', '=', s.id),
+                ('journal_id', 'not in', s.cash_register_id.journal_ids.ids),
+                ('payment_type', '=', 'inbound'),
+                ('state', 'not in', ('draft', 'canceled', 'rejected')),
+            ])
+            s.transfer_payment_ids = pays
+            s.transfer_count = len(pays)
+            s.transfer_total = sum(pays.mapped('amount'))
 
     @api.depends('cash_register_id', 'cash_register_id.journal_ids',
                  'date_open', 'date_close', 'state')

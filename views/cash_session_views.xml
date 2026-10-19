@@ -180,6 +180,26 @@
                             </p>
                         </page>
 
+                        <page string="Transferencias" name="transfers"
+                              invisible="state == 'draft'">
+                            <field name="transfer_payment_ids" readonly="1">
+                                <list create="0" edit="0" delete="0">
+                                    <field name="date"/>
+                                    <field name="partner_id" string="Cliente"/>
+                                    <field name="journal_id" string="Banco"/>
+                                    <field name="payment_reference" string="Nº de operación"/>
+                                    <field name="amount" widget="monetary" sum="Total"/>
+                                    <field name="name" optional="hide"/>
+                                    <field name="currency_id" column_invisible="True"/>
+                                </list>
+                            </field>
+                            <p class="text-muted">
+                                Transferencias registradas en el turno. No entran en el
+                                arqueo: se controlan contra el extracto del banco por su
+                                Nº de operación.
+                            </p>
+                        </page>
+
                         <page string="Retenciones sufridas" name="withholdings"
                               invisible="state == 'draft'">
                             <field name="withholding_line_ids" readonly="1">
